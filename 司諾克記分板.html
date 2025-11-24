@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snooker 記分板</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh; /* 確保內容垂直居中 */
+      margin: 0;
+      background-color: #f0f0f0; /* 輕微的背景色 */
+    }
+    .scoreboard {
+      display: flex;
+      justify-content: center;
+      width: 80%; /* 增加記分板寬度 */
+      max-width: 800px;
+      margin-top: 30px;
+      position: relative; /* 為了子元素的絕對定位 */
+      align-items: flex-start; /* 改為 flex-start 避免分數和冒號對齊導致排版問題 */
+    }
+    .player {
+      width: 45%; /* 調整寬度讓兩邊有空間 */
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* 使 player 內容居中 */
+      padding: 10px; /* 增加整體內邊距 */
+      border-radius: 15px; /* 圓角邊框 */
+    }
+    .player:first-child {
+      text-align: right; /* 第一個玩家的文字靠右 */
+      padding-right: 20px;
+      align-items: flex-end; /* 使 player 1 的內容靠右對齊 */
+    }
+    .player:last-child {
+      text-align: left; /* 第二個玩家的文字靠左 */
+      padding-left: 20px;
+      align-items: flex-start; /* 使 player 2 的內容靠左對齊 */
+    }
+    .editable-name {
+      border: none;
+      font-size: 1.8em;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 15px; /* 增大與局數的間距 */
+      width: 100%;
+      background: none; /* 移除輸入框背景 */
+    }
+    .score {
+      font-size: 8em; /* 增大分數大小 */
+      font-weight: 900; /* 更粗的字體 */
+      line-height: 1; /* 調整行高 */
+      margin-top: 15px; /* 增大與局數的間距 */
+      padding: 10px 20px; /* 增加分數周圍的內邊距，為高亮背景留空間 */
+      border-radius: 10px;
+      transition: background-color 0.3s ease-in-out; /* 顏色過渡效果 */
+      color: #333;
+    }
+    .score.highlight { /* 當前玩家分數高亮顯示樣式 */
+        background-color: rgba(180, 180, 180, 0.6); /* 加深的灰色 */
+    }
+    .frame-count {
+      background: #00bfff;
+      color: white;
+      border-radius: 10px;
+      padding: 0.2em 0.6em;
+      font-size: 1.5em;
+      display: inline-block;
+      margin-bottom: 5px; /* 調整與分數的間距 */
+    }
+    .separator {
+      font-size: 4em;
+      font-weight: bold;
+      margin: 0 10px;
+      align-self: center; /* 讓冒號垂直居中 */
+    }
+    .balls {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      padding: 10px 0;
+    }
+    .ball {
+      width: 50px; /* 增大球的大小 */
+      height: 50px;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 0 8px; /* 增加球之間的間距 */
+      cursor: pointer;
+      border: 2px solid rgba(0,0,0,0.2); /* 增加邊框 */
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.3); /* 增加陰影 */
+      transition: transform 0.1s ease;
+    }
+    .ball:hover {
+      transform: scale(1.1);
+    }
+    .controls { /* 調整這裡以實現多行按鈕 */
+      display: flex;
+      flex-wrap: wrap; /* 允許按鈕自動換行 */
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .controls button {
+      margin: 10px;
+      padding: 12px 25px; /* 增大按鈕大小 */
+      font-size: 1.1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #555;
+      color: white;
+      transition: background-color 0.2s ease;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    }
+    .controls button:hover {
+      background-color: #777;
+    }
+    .break {
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 1.2em;
+      color: #555;
+    }
+    .possible { /* 新增的 Possible 樣式 */
+      font-weight: bold;
+      font-size: 1.2em;
+      color: #6a0dad; /* 紫色 */
+      margin-top: 5px;
+    }
+    .remaining { /* 原本的剩餘分數樣式，現在用於全域剩餘分數 */
+      margin-top: 20px;
+      font-size: 1.5em;
+      color: #444;
+      font-weight: bold;
+    }
+    /* 非進攻方的文字變淡 */
+    .inactive {
+        color: #bbb !important; /* 淺灰色，使用 !important 確保覆蓋 */
+        transition: color 0.3s ease-in-out;
+    }
+    /* 特別處理局數方塊的淡化，因為它有背景色 */
+    .frame-count.inactive {
+        background-color: rgba(0, 191, 255, 0.4); /* 淡化背景色 */
+    }
+  </style>
+</head>
+<body>
+  <div class="scoreboard">
+    <div class="player" id="player1">
+      <input class="editable-name" value="Player 1">
+      <div class="frame-count" id="frame1">0</div>
+      <div class="score" id="score1">0</div>
+      <div class="break" id="break1">Break 0</div>
+      <div class="possible" id="possible1">Possible: 0</div>     </div>
+    <div class="separator">:</div>     <div class="player" id="player2">
+      <input class="editable-name" value="Player 2">
+      <div class="frame-count" id="frame2">0</div>
+      <div class="score" id="score2">0</div>
+      <div class="break" id="break2">Break 0</div>
+      <div class="possible" id="possible2">Possible: 0</div>     </div>
+  </div>
+
+  <div class="balls">
+    <div class="ball" style="background:red" data-points="1" data-color="red"></div>
+    <div class="ball" style="background:yellow" data-points="2" data-color="yellow"></div>
+    <div class="ball" style="background:green" data-points="3" data-color="green"></div>
+    <div class="ball" style="background:brown" data-points="4" data-color="brown"></div>
+    <div class="ball" style="background:blue" data-points="5" data-color="blue"></div>
+    <div class="ball" style="background:pink" data-points="6" data-color="pink"></div>
+    <div class="ball" style="background:black" data-points="7" data-color="black"></div>
+  </div>
+
+  <div class="remaining" id="remaining">剩餘分數：147</div>   <div class="controls">
+    <button onclick="switchTurn()">Turn</button>
+    <button onclick="enterFoulMode()">Foul</button>
+    <button onclick="undo()">Back</button>
+    <button onclick="callGame()">Call Game</button>
+    <button onclick="resetGame()">Reset Game</button>
+  </div>
+
+  <script>
+    let currentPlayer = 1;
+    let scores = [0, 0];
+    let breaks = [0, 0]; // Max break for each player
+    let currentBreak = [0, 0]; // Current break in progress
+    let frames = [0, 0];
+    let history = []; // 儲存每次擊球的歷史
+
+    // 遊戲狀態變數
+    let redBallsOnTable = 15;
+    let colorsOnTable = {
+        yellow: true, green: true, brown: true, blue: true, pink: true, black: true
+    };
+    const colorValues = {
+        red: 1, yellow: 2, green: 3, brown: 4, blue: 5, pink: 6, black: 7
+    };
+    // 彩球的入袋順序（用於計算彩球階段的剩餘分數）
+    const orderedColors = ['yellow', 'green', 'brown', 'blue', 'pink', 'black'];
+
+    let lastPottedWasRed = false; // True if the last ball potted was a red (for current player's turn)
+    let remainingPoints = 147; // 全域檯面剩餘分數
+    // 'red_phase': 紅球階段 (紅 -> 彩 -> 紅 -> 彩...)
+    // 'color_clearance_phase': 彩球清檯階段 (黃 -> 綠 -> 棕 -> 藍 -> 粉 -> 黑)
+    let gamePhase = 'red_phase';
+    // 在彩球清檯階段，追蹤下一個預期的彩球索引
+    let nextColorBallIndex = 0; // 0:黃, 1:綠, ..., 5:黑
+
+    let foulMode = false; // 新增：是否處於犯規模式
+
+    // 計算檯面上目前最高可獲得的分數（不含玩家已得的分數）
+    function calculateMaxPointsOnTable() {
+        let maxTablePoints = 0;
+        if (redBallsOnTable > 0) {
+            // 有紅球時，每個紅球可以搭配一個黑球的最大分數
+            maxTablePoints = (redBallsOnTable * (colorValues.red + colorValues.black));
+            // 加上所有彩球的固定分數 (這些都是在檯面上的)
+            for (let color of orderedColors) {
+                if (colorsOnTable[color]) { // 只有在檯面上的才算
+                    maxTablePoints += colorValues[color];
+                }
+            }
+        } else {
+            // 所有紅球都打完了，只剩下彩球，按照順序黃、綠、棕、藍、粉、黑
+            for (let i = nextColorBallIndex; i < orderedColors.length; i++) {
+                let color = orderedColors[i];
+                if (colorsOnTable[color]) { // 只有在檯面上的才算
+                    maxTablePoints += colorValues[color];
+                }
+            }
+        }
+        return maxTablePoints;
+    }
+
+    // 計算所有彩球的總和 (黃到黑)
+    function sumOfAllColors() {
+        return colorValues.yellow + colorValues.green + colorValues.brown +
+               colorValues.blue + colorValues.pink + colorValues.black; // 27分
+    }
+
+    // 新增：進入犯規模式
+    function enterFoulMode() {
+        foulMode = true;
+        // 可以考慮在此處給予用戶提示，例如改變按鈕顏色或顯示文本
+        // alert("已進入犯規模式，請點擊對應顏色的球以計算犯規分數。"); // 暫時註銷，避免每次都彈窗
+        // 您也可以在這裡改變 Foul 按鈕的樣式，使其看起來被啟用
+        document.querySelector('button[onclick="enterFoulMode()"]').style.backgroundColor = '#FFD700'; // 黃金色
+        document.querySelector('button[onclick="enterFoulMode()"]').style.color = '#333'; // 深色文字
+    }
+
+    document.querySelectorAll('.ball').forEach(ball => {
+        ball.addEventListener('click', () => {
+            const points = parseInt(ball.dataset.points);
+            const pottedColor = ball.dataset.color;
+
+            // 處理 NaN 錯誤: 檢查 points 是否為有效數字
+            if (isNaN(points)) {
+                console.error("Error: Invalid points for ball:", ball);
+                return; // 終止執行，避免 NaN 傳播
+            }
+
+            // 在擊球前儲存當前狀態到歷史中
+            history.push({
+                player: currentPlayer,
+                points: points, // 記錄擊打的球的分數
+                prevScores: [...scores],
+                prevBreaks: [...breaks],
+                prevCurrentBreak: [...currentBreak],
+                prevRedBallsOnTable: redBallsOnTable,
+                prevColorsOnTable: JSON.parse(JSON.stringify(colorsOnTable)), // 深拷貝
+                prevLastPottedWasRed: lastPottedWasRed,
+                prevRemainingPoints: remainingPoints, // 儲存之前的全域剩餘分數
+                prevGamePhase: gamePhase, // 儲存之前的遊戲階段
+                prevNextColorBallIndex: nextColorBallIndex, // 儲存之前的彩球索引
+                isFoul: foulMode // 新增：記錄這次操作是否為犯規
+            });
+
+
+            if (foulMode) {
+                // 犯規模式：分數加到對方身上
+                const opponentPlayer = currentPlayer === 1 ? 2 : 1;
+                // 犯規至少4分，或點擊的球的分數，取兩者最大值
+                scores[opponentPlayer - 1] += Math.max(4, points); 
+                
+                currentBreak[currentPlayer - 1] = 0; // 犯規清空當前擊球分數
+                lastPottedWasRed = false; // 犯規後重置紅球標記
+
+                foulMode = false; // 退出犯規模式
+                currentPlayer = opponentPlayer; // 直接切換到對手進攻
+
+                // 恢復 Foul 按鈕的樣式
+                document.querySelector('button[onclick="enterFoulMode()"]').style.backgroundColor = '#555';
+                document.querySelector('button[onclick="enterFoulMode()"]').style.color = 'white';
+
+                // 犯規不會改變檯面上的球狀態或剩餘分數（球被犯規後會被放回）
+            } else {
+                // 正常擊球邏輯
+                scores[currentPlayer - 1] += points;
+                currentBreak[currentPlayer - 1] += points;
+
+                if (currentBreak[currentPlayer - 1] > breaks[currentPlayer - 1]) {
+                    breaks[currentPlayer - 1] = currentBreak[currentPlayer - 1];
+                }
+
+                // ====== 剩餘分數的精確邏輯處理 ======
+                if (gamePhase === 'red_phase') {
+                    if (redBallsOnTable === 0) { // 所有紅球都已清空
+                        // 這是在最後一顆紅球之後打的彩球，它觸發了從 34 到 27 的轉變
+                        if (pottedColor !== 'red' && colorsOnTable[pottedColor]) {
+                            remainingPoints = sumOfAllColors(); // 設定為 27
+                            gamePhase = 'color_clearance_phase'; // 進入清彩球階段
+                            nextColorBallIndex = 0; // 從黃球開始清檯
+                            lastPottedWasRed = false; // 重置狀態
+                            // 注意：這裡不將該彩球從 colorsOnTable 移除，它將在清彩球階段按順序移除
+                        }
+                        // 如果這時打紅球或錯誤彩球，remainingPoints不變
+                    } else if (lastPottedWasRed) { // 上一擊是紅球，現在期待彩球
+                        if (pottedColor !== 'red' && colorsOnTable[pottedColor]) {
+                            remainingPoints -= colorValues.black; // 固定扣 7 分
+                            lastPottedWasRed = false; // 彩球打完，等待下一個紅球
+                            // 注意：這裡不將彩球從 colorsOnTable 移除，因為它會被放回檯面
+                        }
+                        // 如果打了紅球後，又打了紅球，或者打了不存在的彩球，remainingPoints不變
+                    } else { // 還沒打紅球，期待打紅球
+                        if (pottedColor === 'red') {
+                            redBallsOnTable--;
+                            remainingPoints -= colorValues.red; // 扣除紅球的1分
+                            lastPottedWasRed = true;
+
+                            if (redBallsOnTable === 0) {
+                                // 如果這是最後一顆紅球，將 remainingPoints 設定為 34 (所有彩球 + 黑球機會)
+                                remainingPoints = sumOfAllColors() + colorValues.black;
+                                // lastPottedWasRed 保持 true，等待隨後的彩球
+                            }
+                        }
+                        // 如果還沒打紅球就打了彩球，remainingPoints不變
+                    }
+                } else if (gamePhase === 'color_clearance_phase') {
+                    // 清彩球階段，必須按照順序打
+                    if (nextColorBallIndex < orderedColors.length) { // 還有彩球要清
+                        const expectedColor = orderedColors[nextColorBallIndex];
+                        if (pottedColor === expectedColor && colorsOnTable[pottedColor]) {
+                            // 打進了正確的彩球，符合預期
+                            colorsOnTable[pottedColor] = false; // 移除彩球
+                            remainingPoints -= points; // 扣除彩球分數
+                            nextColorBallIndex++; // 移動到下一個預期彩球
+
+                            if (nextColorBallIndex === orderedColors.length) { // 所有彩球都清完了
+                                remainingPoints = 0;
+                            }
+                        }
+                        // 如果打錯了彩球，remainingPoints不變
+                    } else { // 所有彩球都清完了
+                        remainingPoints = 0;
+                    }
+                }
+            } // End of if (foulMode) / else block
+
+            // 確保 remainingPoints 不會低於 0
+            if (remainingPoints < 0) remainingPoints = 0;
+
+            updateDisplay();
+            checkSnookerSituation();
+        });
+    });
+
+    function updateDisplay() {
+        document.getElementById('score1').innerText = scores[0];
+        document.getElementById('score2').innerText = scores[1];
+        document.getElementById('break1').innerText = `Break ${breaks[0]}`;
+        document.getElementById('break2').innerText = `Break ${breaks[1]}`;
+        
+        // 更新選手各自的 Possible
+        const opponentPlayer = currentPlayer === 1 ? 2 : 1;
+        document.getElementById(`possible${currentPlayer}`).innerText = `Possible: ${scores[currentPlayer - 1] + remainingPoints}`; // 進攻方
+        document.getElementById(`possible${opponentPlayer}`).innerText = `Possible: ${scores[opponentPlayer - 1] + calculateMaxPointsOnTable()}`; // 等待方
+        
+        // 更新全域剩餘分數
+        document.getElementById('remaining').innerText = `剩餘分數：${remainingPoints}`;
+
+        // 移除所有 highlight 和 inactive 類別
+        document.getElementById('score1').classList.remove('highlight');
+        document.getElementById('score2').classList.remove('highlight');
+        document.getElementById('score1').classList.remove('inactive'); // 移除分數上的 inactive
+        document.getElementById('score2').classList.remove('inactive'); // 移除分數上的 inactive
+
+        // 將當前玩家分數高亮
+        document.getElementById(`score${currentPlayer}`).classList.add('highlight');
+
+        // 將非當前玩家的相關元素變淡 (包括分數)
+        document.getElementById(`score${opponentPlayer}`).classList.add('inactive'); // 非進攻方的分數也變淡
+        document.getElementById(`player${opponentPlayer}`).querySelectorAll('.frame-count, .break, .possible').forEach(el => el.classList.add('inactive'));
+
+        // 將當前玩家的相關元素恢復正常顏色
+        document.getElementById(`player${currentPlayer}`).querySelectorAll('.frame-count, .break, .possible').forEach(el => el.classList.remove('inactive'));
+    }
+
+    function switchTurn() {
+        // 儲存當前狀態到歷史中，用於 undo (在換手前)
+        history.push({
+            player: currentPlayer, // 記錄是哪個玩家換的手
+            points: 0, // 換手不加分，但作為一個歷史事件
+            prevScores: [...scores],
+            prevBreaks: [...breaks],
+            prevCurrentBreak: [...currentBreak],
+            prevRedBallsOnTable: redBallsOnTable,
+            prevColorsOnTable: JSON.parse(JSON.stringify(colorsOnTable)), // 深拷貝
+            prevLastPottedWasRed: lastPottedWasRed,
+            prevRemainingPoints: remainingPoints, // 儲存之前的全域剩餘分數
+            prevGamePhase: gamePhase, // 儲存之前的遊戲階段
+            prevNextColorBallIndex: nextColorBallIndex, // 儲存之前的彩球索引
+            isFoul: false // Turn 操作不是犯規
+        });
+
+        // 處理紅球階段換手時的剩餘分數扣除邏輯
+        if (gamePhase === 'red_phase' && lastPottedWasRed) {
+            // 如果上一個球是紅球，但接下來沒有打彩球就換手，則扣除7分
+            remainingPoints -= colorValues.black; // 固定扣 7 分
+            if (remainingPoints < 0) remainingPoints = 0;
+
+            // 特殊處理：如果這是最後一顆紅球後的換手
+            if (redBallsOnTable === 0) {
+                // 從 34 (紅球已清，待打彩球) 變為 27 (進入清彩球階段)
+                remainingPoints = sumOfAllColors(); // 設定為 27
+                gamePhase = 'color_clearance_phase';
+                nextColorBallIndex = 0; // 從黃球開始清檯
+            }
+        }
+
+        // 當前的 break 結束
+        currentBreak[currentPlayer - 1] = 0;
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        lastPottedWasRed = false; // 換手後重置紅球標記
+        foulMode = false; // 確保退出犯規模式 (如果之前點了Foul但沒點球就按Turn)
+        // 恢復 Foul 按鈕的樣式
+        document.querySelector('button[onclick="enterFoulMode()"]').style.backgroundColor = '#555';
+        document.querySelector('button[onclick="enterFoulMode()"]').style.color = 'white';
+
+        updateDisplay();
+    }
+
+    function undo() {
+        let last = history.pop();
+        if (last) {
+            scores = [...last.prevScores];
+            breaks = [...last.prevBreaks];
+            currentBreak = [...last.prevCurrentBreak];
+            redBallsOnTable = last.prevRedBallsOnTable;
+            colorsOnTable = JSON.parse(JSON.stringify(last.prevColorsOnTable)); // 深拷貝
+            lastPottedWasRed = last.prevLastPottedWasRed;
+            remainingPoints = last.prevRemainingPoints; // 恢復全域剩餘分數
+            gamePhase = last.prevGamePhase; // 恢復遊戲階段
+            nextColorBallIndex = last.prevNextColorBallIndex; // 恢復彩球索引
+            currentPlayer = last.player; // 撤銷時保持當前玩家
+            foulMode = false; // 撤銷後重置犯規模式
+            // 恢復 Foul 按鈕的樣式
+            document.querySelector('button[onclick="enterFoulMode()"]').style.backgroundColor = '#555';
+            document.querySelector('button[onclick="enterFoulMode()"]').style.color = 'white';
+            updateDisplay();
+        }
+    }
+
+    function callGame() {
+        let winner = scores[0] > scores[1] ? 1 : 2;
+        if (scores[0] === scores[1]) {
+            alert("分數相同，遊戲平局！");
+        } else {
+            frames[winner - 1]++;
+        }
+        document.getElementById('frame1').innerText = frames[0];
+        document.getElementById('frame2').innerText = frames[1];
+
+        // 重置分數、break 和歷史，開始新的一局
+        scores = [0, 0];
+        breaks = [0, 0];
+        currentBreak = [0, 0];
+        history = [];
+        redBallsOnTable = 15;
+        colorsOnTable = { yellow: true, green: true, brown: true, blue: true, pink: true, black: true };
+        lastPottedWasRed = false;
+        remainingPoints = 147; // 重置全域剩餘分數
+        gamePhase = 'red_phase'; // 重置遊戲階段
+        nextColorBallIndex = 0; // 重置彩球索引
+        foulMode = false; // 重置犯規模式
+        // 恢復 Foul 按鈕的樣式
+        document.querySelector('button[onclick="enterFoulMode()"]').style.backgroundColor = '#555';
+        document.querySelector('button[onclick="enterFoulMode()"]').style.color = 'white';
+        updateDisplay();
+    }
+
+    function resetGame() {
+        scores = [0, 0];
+        breaks = [0, 0];
+        currentBreak = [0, 0];
+        frames = [0, 0]; // 重置局數
+        history = [];
+        redBallsOnTable = 15;
+        colorsOnTable = { yellow: true, green: true, brown: true, blue: true, pink: true, black: true };
+        lastPottedWasRed = false;
+        remainingPoints = 147; // 重置全域剩餘分數
+        gamePhase = 'red_phase'; // 重置遊戲階段
+        nextColorBallIndex = 0; // 重置彩球索引
+        foulMode = false; // 重置犯規模式
+        // 恢復 Foul 按鈕的樣式
+        document.querySelector('button[onclick="enterFoulMode()"]').style.backgroundColor = '#555';
+        document.querySelector('button[onclick="enterFoulMode()"]').style.color = 'white';
+        updateDisplay();
+        document.getElementById('frame1').innerText = 0;
+        document.getElementById('frame2').innerText = 0;
+    }
+
+
+    // 初始化顯示
+    updateDisplay();
+  </script>
+</body>
+</html>
