@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vibe Snooker - 雙人司諾克</title>
+    <title>Snooker V1.0.5</title>
     <style>
-        /* --- CSS 樣式區域 --- */
+        /* --- CSS 樣式區域 (V1.0.5) --- */
         body {
             margin: 0;
             padding: 0;
-            background-color: #1a1a1a;
-            overflow: hidden; /* 防止滾動 */
+            background-color: #121212;
+            overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none; /* 禁止默認觸控行為 */
-            user-select: none; /* 禁止選取文字 */
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         #game-container {
@@ -23,190 +24,255 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #222;
+            background: #1a1a1a;
         }
 
         canvas {
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
-            border-radius: 4px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border-radius: 4px; /* 邊角稍微銳利一點 */
             cursor: crosshair;
         }
 
-        /* UI 覆蓋層 */
         .ui-layer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* 讓點擊穿透到 Canvas，除非點擊到具體按鈕 */
+            pointer-events: none;
         }
 
         /* 記分板 */
         #scoreboard {
             position: absolute;
-            top: 10px;
+            top: 0;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 5px 20px;
-            border-radius: 20px;
-            font-size: 16px;
+            width: 70%;
+            max-width: 500px;
+            height: 55px;
+            background: linear-gradient(to bottom, #2c3e50, #000);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            border: 1px solid #444;
+            border-top: none;
             display: flex;
-            gap: 20px;
-            pointer-events: auto;
-        }
-
-        .player-score {
-            font-weight: bold;
-        }
-        .active-turn {
-            color: #ffd700;
-            text-decoration: underline;
-        }
-
-        /* 版本資訊按鈕 */
-        #info-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 36px;
-            height: 36px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            color: white;
-            border-radius: 8px; /* 圓角矩形 */
-            font-size: 20px;
-            display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            cursor: pointer;
+            padding: 0 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
             pointer-events: auto;
-            transition: background 0.2s;
-        }
-        #info-btn:hover {
-            background: rgba(255, 255, 255, 0.4);
+            color: #fff;
+            z-index: 10;
         }
 
-        /* 力道條 (Power Bar) */
+        .player-info { display: flex; flex-direction: column; align-items: center; width: 80px; }
+        .player-name { font-size: 12px; color: #aaa; margin-bottom: 2px; }
+        .score-val { font-size: 24px; font-weight: bold; color: #fff; line-height: 1; }
+        
+        #frame-info {
+            display: flex; flex-direction: column; align-items: center;
+            background: #111; padding: 2px 15px; border-radius: 6px;
+            border: 1px solid #555; min-width: 90px;
+        }
+        #frame-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        #frame-score { font-size: 18px; color: #ffd700; font-weight: bold; }
+
+        .active-p1 .player-info:first-child .score-val { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        .active-p2 .player-info:last-child .score-val { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+
+        /* 力道條 */
         #power-bar-container {
             position: absolute;
             right: 15px;
             top: 50%;
             transform: translateY(-50%);
-            width: 30px;
-            height: 60%;
-            background: #333;
+            width: 24px;
+            height: 200px;
+            background: #222;
             border: 2px solid #555;
-            border-radius: 15px;
+            border-radius: 12px;
             pointer-events: auto;
             overflow: hidden;
-            touch-action: none;
+            z-index: 20;
         }
-
         #power-fill {
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 0%; /* 動態改變 */
-            background: linear-gradient(to top, #00ff00, #ffff00, #ff0000);
-            transition: height 0.05s linear;
+            height: 50%;
+            background: linear-gradient(to top, #2ecc71, #f1c40f, #e74c3c);
+            transition: height 0.1s linear;
         }
-        
         #power-label {
             position: absolute;
-            right: 50px;
+            right: 45px;
             top: 50%;
             transform: translateY(-50%);
-            color: white;
-            font-size: 12px;
-            pointer-events: none;
-            opacity: 0.7;
+            color: rgba(255,255,255,0.4);
+            font-size: 10px;
             writing-mode: vertical-rl;
-            text-orientation: mixed;
+            letter-spacing: 3px;
         }
 
-        /* 微調按鈕 */
+        /* SHOOT 按鈕 */
+        #fire-btn {
+            position: absolute;
+            right: 50px;
+            bottom: 20%;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #e74c3c, #c0392b);
+            border: 3px solid #fff;
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.6);
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: transform 0.1s, opacity 0.2s;
+            opacity: 0.5;
+            pointer-events: none;
+            user-select: none;
+            z-index: 20;
+        }
+        #fire-btn.ready {
+            opacity: 1;
+            pointer-events: auto;
+            animation: pulse 2s infinite;
+        }
+        #fire-btn:active { transform: scale(0.95); }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        /* V1.0.5 重設按鈕: 改為「重新擺球」 */
+        #reset-cue-btn {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(50, 50, 50, 0.8);
+            color: #ddd;
+            border: 1px solid #777;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            pointer-events: auto;
+            display: none; /* 預設隱藏，瞄準時顯示 */
+            font-size: 13px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            z-index: 50;
+            transition: background 0.2s;
+        }
+        #reset-cue-btn:hover { background: rgba(80, 80, 80, 0.9); color: #fff; }
+
+        /* 控制按鈕 */
+        #info-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 32px;
+            height: 32px;
+            background: #444;
+            color: white;
+            border: 1px solid #777;
+            border-radius: 50%;
+            font-family: serif; font-weight: bold; font-size: 18px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; pointer-events: auto;
+            z-index: 30;
+        }
+
         #controls-bottom {
             position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 40px;
+            gap: 60px;
             pointer-events: auto;
         }
-
         .adjust-btn {
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.15);
+            width: 50px; height: 50px;
+            background: rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            color: white;
-            font-size: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            user-select: none;
+            color: white; font-size: 20px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; transition: background 0.1s;
         }
-        .adjust-btn:active {
-            background: rgba(255, 255, 255, 0.4);
-        }
+        .adjust-btn:active { background: rgba(255, 255, 255, 0.3); }
 
-        /* 模態視窗 (Modal) */
-        #modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            pointer-events: auto;
-        }
-
-        #modal-content {
-            background: #fff;
-            color: #333;
-            width: 300px;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 0 15px rgba(255,255,255,0.2);
-        }
-
-        #modal-content h2 { margin-top: 0; }
-        #modal-close {
-            margin-top: 15px;
-            padding: 8px 16px;
-            background: #333;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        
-        /* 狀態提示 */
         #status-msg {
             position: absolute;
-            bottom: 90px;
+            bottom: 85px;
             left: 50%;
             transform: translateX(-50%);
-            color: #fff;
-            background: rgba(0,0,0,0.5);
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 14px;
+            color: #eee;
+            background: rgba(0,0,0,0.7);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
             pointer-events: none;
+            white-space: nowrap;
+            z-index: 15;
+            transition: color 0.3s;
         }
 
+        /* Modal */
+        #modal-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            justify-content: center; align-items: center;
+            pointer-events: auto;
+        }
+        #modal-content {
+            background: #f5f5f5; color: #222;
+            width: 340px; max-height: 80vh; overflow-y: auto;
+            padding: 20px; border-radius: 10px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.7);
+        }
+        #modal-content h2 { margin-top: 0; border-bottom: 2px solid #333; padding-bottom: 10px; font-size: 20px;}
+        
+        details.version-block {
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fff;
+            overflow: hidden;
+            text-align: left;
+        }
+        details[open] { background: #e8f0fe; border-color: #4285f4; }
+        
+        summary.version-title {
+            font-weight: bold;
+            cursor: pointer;
+            padding: 10px;
+            outline: none;
+            list-style: none;
+            background: #eee;
+        }
+        summary.version-title:hover { background: #e0e0e0; }
+        details[open] summary.version-title { background: #d2e3fc; color: #1967d2; }
+        summary.version-title::-webkit-details-marker { display: none; }
+        summary.version-title::after { content: "+"; float: right; font-weight: normal; color: #666; }
+        details[open] summary.version-title::after { content: "-"; }
+        .version-list { margin: 10px 0 10px 20px; padding-right: 10px; font-size: 13px; line-height: 1.6; color: #333; }
+        #modal-close {
+            margin-top: 15px; padding: 10px; background: #333; color: white;
+            border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -214,27 +280,35 @@
     <div id="game-container">
         <canvas id="snookerCanvas"></canvas>
         
-        <!-- UI 層 -->
         <div class="ui-layer">
-            <!-- 記分板 -->
             <div id="scoreboard">
-                <div id="p1-score" class="player-score active-turn">P1: 0</div>
-                <div id="p2-score" class="player-score">P2: 0</div>
+                <div class="player-info">
+                    <span class="player-name">Player 1</span>
+                    <span id="p1-score" class="score-val">0</span>
+                </div>
+                <div id="frame-info">
+                    <span id="frame-label">FRAMES</span>
+                    <span id="frame-score">0 - 0</span>
+                </div>
+                <div class="player-info">
+                    <span class="player-name">Player 2</span>
+                    <span id="p2-score" class="score-val">0</span>
+                </div>
             </div>
 
-            <!-- 版本資訊按鈕 -->
             <div id="info-btn">i</div>
+            <div id="fire-btn">SHOOT</div>
+            
+            <!-- V1.0.5: 文字修改為重新擺球 -->
+            <button id="reset-cue-btn">↩️ 重新擺球</button>
 
-            <!-- 力道條 -->
             <div id="power-bar-container">
                 <div id="power-fill"></div>
             </div>
             <div id="power-label">POWER</div>
 
-            <!-- 狀態訊息 -->
-            <div id="status-msg">點擊檯面瞄準，拖曳右側力道條出桿</div>
+            <div id="status-msg">Vibe Snooker V1.0.5</div>
 
-            <!-- 微調按鈕 -->
             <div id="controls-bottom">
                 <div class="adjust-btn" id="btn-left">&lt;</div>
                 <div class="adjust-btn" id="btn-right">&gt;</div>
@@ -242,102 +316,154 @@
         </div>
     </div>
 
-    <!-- 模態視窗 -->
+    <!-- Modal -->
     <div id="modal-overlay">
         <div id="modal-content">
-            <h2>Vibe Snooker</h2>
-            <p><strong>版本號:</strong> 1.0.0</p>
-            <div style="text-align: left; margin: 10px 0; font-size: 14px; line-height: 1.5;">
-                <strong>版本日誌:</strong><br>
-                初始版本，實現基本物理模擬與雙人操控。<br>
-                - 15顆紅球 + 6顆彩球<br>
-                - 雙人對戰記分邏輯<br>
-                - 物理碰撞與摩擦力
-            </div>
+            <h2>Snooker 版本資訊</h2>
+            
+            <!-- V 1.0.5 -->
+            <details class="version-block" open>
+                <summary class="version-title">Version 1.0.5 (最新)</summary>
+                <ul class="version-list">
+                    <li><strong>進球判定重寫:</strong> 球在袋口附近時關閉庫邊碰撞，解決球被彈出問題。</li>
+                    <li><strong>庫邊調整:</strong> 厚度減薄至標準比例，提升視覺與可玩性。</li>
+                    <li><strong>球速與手感:</strong> 降低擊球速度(動畫變慢)，減少摩擦力(滾更遠)，模擬真實檯泥。</li>
+                    <li><strong>規則修正:</strong> 綠/黃球位置改為 D 區角落；移除紅球與粉球間隙。</li>
+                    <li><strong>擺球優化:</strong> 「重新擺球」按鈕改為擺球確認後出現，可隨時反悔重擺。</li>
+                </ul>
+            </details>
+
+            <details class="version-block">
+                <summary class="version-title">Version 1.0.4</summary>
+                <ul class="version-list">
+                    <li>預設力量 50%。</li>
+                    <li>碰撞邏輯初步優化。</li>
+                </ul>
+            </details>
+            <details class="version-block">
+                <summary class="version-title">Version 1.0.3</summary>
+                <ul class="version-list">
+                    <li>袋口寬度調整。</li>
+                    <li>手風琴式選單。</li>
+                </ul>
+            </details>
+            <details class="version-block">
+                <summary class="version-title">Version 1.0.2</summary>
+                <ul class="version-list">
+                    <li>獨立擊球按鈕 (SHOOT)。</li>
+                    <li>瞄準線動態顯示。</li>
+                </ul>
+            </details>
+            <details class="version-block">
+                <summary class="version-title">Version 1.0.1</summary>
+                <ul class="version-list">
+                    <li>修正 Cushion 物理反彈。</li>
+                    <li>長條型記分板。</li>
+                </ul>
+            </details>
             <button id="modal-close">關閉</button>
         </div>
     </div>
 
     <script>
         /**
-         * Vibe Snooker - 遊戲核心邏輯
+         * Vibe Snooker V1.0.5
+         * 修正進球物理、庫邊厚度、動畫速度、擺球規則與重設邏輯
          */
 
-        // --- 配置常數 ---
-        const TABLE_WIDTH_BASE = 800;  // 邏輯寬度
-        const TABLE_HEIGHT_BASE = 400; // 邏輯高度
-        const BALL_RADIUS = 7;         // 球半徑
-        const POCKET_RADIUS = 12;      // 袋口半徑
-        const RAIL_SIZE = 20;          // 邊框寬度
+        // --- 常數配置 ---
+        const TABLE_WIDTH_BASE = 800;
+        const TABLE_HEIGHT_BASE = 400;
         
-        // 顏色定義
+        const BALL_RADIUS = 7;
+        
+        // V1.0.5: 袋口半徑設為 22 (球直徑 14 的約 1.6 倍)
+        // 配合新的「忽略庫邊」邏輯，這大小很剛好
+        const POCKET_RADIUS = 22; 
+        
+        // V1.0.5: 庫邊改薄，視覺更像真實球桌 (原 25 -> 16)
+        const RAIL_SIZE = 16; 
+        
+        const D_LINE_X = TABLE_WIDTH_BASE * 0.2;
+        const D_ARC_RADIUS = 60; 
+
+        // 物理參數
+        // V1.0.5: 摩擦力調高 (數值接近1)，讓球滾更久 (原 0.975 -> 0.988)
+        // 配合極低的速度係數，創造「慢速但長距離」的滾動感
+        const FRICTION = 0.988; 
+        const STOP_THRESHOLD = 0.03;
+        const CUSHION_RESTITUTION = 0.8; 
+        
+        // V1.0.5: 大幅降低力道係數，解決「動畫太快」問題 (原 0.33 -> 0.18)
+        const FORCE_MULTIPLIER = 0.18;
+
         const COLORS = {
             FELT: '#2a7c45',
-            RAIL: '#4e2a14',
-            POCKET: '#111',
-            GUIDE: 'rgba(255, 255, 255, 0.5)',
+            RAIL: '#3e2211', // 稍微深一點的木頭色
+            POCKET: '#080808',
+            GUIDE_CUE: '#ffffff',
+            GUIDE_TARGET: '#ffff00', 
             CUE_STICK: '#d2b48c'
         };
 
         const BALL_TYPES = {
-            WHITE: { color: '#ffffff', points: 4, type: 'cue' }, // 犯規罰4分
-            RED:   { color: '#cc0000', points: 1, type: 'red' },
-            YELLOW:{ color: '#eebb00', points: 2, type: 'color' },
-            GREEN: { color: '#006600', points: 3, type: 'color' },
-            BROWN: { color: '#996633', points: 4, type: 'color' },
-            BLUE:  { color: '#0000cc', points: 5, type: 'color' },
-            PINK:  { color: '#ff6699', points: 6, type: 'color' },
-            BLACK: { color: '#000000', points: 7, type: 'color' }
+            WHITE:  { color: '#ffffff', points: 4, type: 'cue' },
+            RED:    { color: '#cc0000', points: 1, type: 'red' },
+            YELLOW: { color: '#eebb00', points: 2, type: 'color', value: 2 },
+            GREEN:  { color: '#006600', points: 3, type: 'color', value: 3 },
+            BROWN:  { color: '#996633', points: 4, type: 'color', value: 4 },
+            BLUE:   { color: '#0000cc', points: 5, type: 'color', value: 5 },
+            PINK:   { color: '#ff6699', points: 6, type: 'color', value: 6 },
+            BLACK:  { color: '#000000', points: 7, type: 'color', value: 7 }
         };
 
         // --- 全域變數 ---
         const canvas = document.getElementById('snookerCanvas');
         const ctx = canvas.getContext('2d');
-        let scaleFactor = 1; // 響應式縮放比例
+        let scaleFactor = 1;
 
         let balls = [];
         let pockets = [];
         let cueBall = null;
 
-        // 遊戲狀態
         let gameState = {
-            isMoving: false,     // 球是否在滾動
-            isAiming: true,      // 是否在瞄準模式
-            isPlacingCue: false, // 是否在放置母球 (犯規後)
-            currentPlayer: 1,    // 1 或 2
+            isMoving: false,
+            isAiming: true,
+            isPlacingCue: true,
+            currentPlayer: 1,
             scores: { 1: 0, 2: 0 },
-            aimAngle: 0,         // 弧度
-            power: 0,            // 0 ~ 100
-            targetBall: 'red',   // 'red' 或 'color' (當前應該打什麼)
-            pottedBalls: [],     // 本回合進球紀錄
-            redsRemaining: 15
+            frames: { 1: 0, 2: 0 },
+            aimAngle: 0,
+            power: 50, 
+            targetBall: 'red',
+            pottedBalls: [],
+            redsRemaining: 15,
+            minColorPoints: 2
         };
 
         // --- 初始化 ---
-
         function init() {
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             setupInput();
-            resetGame();
+            setupAccordion();
+            resetGame(true); 
             requestAnimationFrame(gameLoop);
         }
 
-        // 響應式調整 Canvas 大小
         function resizeCanvas() {
             const container = document.getElementById('game-container');
             const targetRatio = TABLE_WIDTH_BASE / TABLE_HEIGHT_BASE;
             const containerRatio = container.clientWidth / container.clientHeight;
 
             let finalWidth, finalHeight;
+            const FILL_PERCENTAGE = 0.85; 
 
             if (containerRatio > targetRatio) {
-                // 視窗比較寬，以高度為基準
-                finalHeight = container.clientHeight * 0.95;
+                finalHeight = container.clientHeight * FILL_PERCENTAGE;
                 finalWidth = finalHeight * targetRatio;
             } else {
-                // 視窗比較窄，以寬度為基準
-                finalWidth = container.clientWidth * 0.95;
+                finalWidth = container.clientWidth * FILL_PERCENTAGE;
                 finalHeight = finalWidth / targetRatio;
             }
 
@@ -346,52 +472,68 @@
             scaleFactor = finalWidth / TABLE_WIDTH_BASE;
         }
 
-        // 重置/開始遊戲
-        function resetGame() {
+        function resetGame(startNewMatch = false) {
             balls = [];
-            gameState.scores = { 1: 0, 2: 0 };
-            gameState.currentPlayer = 1;
-            gameState.targetBall = 'red';
-            gameState.redsRemaining = 15;
-            updateUI();
+            
+            if (startNewMatch) {
+                gameState.frames = { 1: 0, 2: 0 };
+            }
 
-            // 定義袋口位置 (邏輯座標)
+            gameState.isMoving = false;
+            gameState.isAiming = true;
+            gameState.isPlacingCue = true; // 開局需要擺球
+            gameState.currentPlayer = 1;
+            gameState.scores = { 1: 0, 2: 0 };
+            gameState.aimAngle = 0;
+            gameState.targetBall = 'red';
+            gameState.pottedBalls = [];
+            gameState.redsRemaining = 15;
+            gameState.minColorPoints = 2;
+
+            resetPowerBarUI(50);
+            
             const w = TABLE_WIDTH_BASE;
             const h = TABLE_HEIGHT_BASE;
+            
+            // 定義袋口 (針對 RAIL_SIZE 微調)
+            // 讓袋口中心稍微深入邊框內，確保球掉進去
+            const offset = RAIL_SIZE / 2; 
             pockets = [
-                { x: 0, y: 0 }, { x: w/2, y: 0 }, { x: w, y: 0 },
-                { x: 0, y: h }, { x: w/2, y: h }, { x: w, y: h }
+                { x: offset, y: offset },         
+                { x: w/2, y: -5 }, // 中袋稍微突出畫面外             
+                { x: w-offset, y: offset },       
+                { x: offset, y: h-offset },       
+                { x: w/2, y: h + 5 },             
+                { x: w-offset, y: h-offset }      
             ];
 
-            // 1. 放置母球 (D區)
-            cueBall = createBall(w * 0.2, h * 0.6, BALL_TYPES.WHITE);
+            // 母球
+            cueBall = createBall(-100, -100, BALL_TYPES.WHITE); 
             balls.push(cueBall);
 
-            // 2. 放置彩球 (Spot positions)
-            const dLineX = w * 0.2;
-            balls.push(createBall(dLineX, h/2 - 40, BALL_TYPES.GREEN)); // Green
-            balls.push(createBall(dLineX, h/2 + 40, BALL_TYPES.YELLOW)); // Yellow
-            balls.push(createBall(dLineX, h/2, BALL_TYPES.BROWN)); // Brown
-            balls.push(createBall(w * 0.5, h/2, BALL_TYPES.BLUE)); // Blue
-            balls.push(createBall(w * 0.75, h/2, BALL_TYPES.PINK)); // Pink
-            balls.push(createBall(w * 0.92, h/2, BALL_TYPES.BLACK)); // Black
-
-            // 3. 放置紅球 (三角形堆疊)
-            // 第一顆紅球在粉球後面
-            let startX = w * 0.75 + BALL_RADIUS * 2 + 2;
-            let startY = h / 2;
-            let row = 0;
-            let index = 0;
+            // V1.0.5: 修正彩球位置
+            // Green: D線與半圓上方交點
+            balls.push(createBall(D_LINE_X, h/2 - D_ARC_RADIUS, BALL_TYPES.GREEN)); 
+            // Yellow: D線與半圓下方交點
+            balls.push(createBall(D_LINE_X, h/2 + D_ARC_RADIUS, BALL_TYPES.YELLOW)); 
+            // Brown: 中間
+            balls.push(createBall(D_LINE_X, h/2, BALL_TYPES.BROWN));       
             
+            balls.push(createBall(w * 0.5, h/2, BALL_TYPES.BLUE));
+            balls.push(createBall(w * 0.75, h/2, BALL_TYPES.PINK));
+            balls.push(createBall(w * 0.91, h/2, BALL_TYPES.BLACK));
+
+            // V1.0.5: 紅球堆緊貼粉球 (間距改為 1px)
+            let startX = w * 0.75 + BALL_RADIUS * 2 + 1;
+            let startY = h / 2;
             for (let i = 0; i < 5; i++) {
                 for (let j = 0; j <= i; j++) {
-                    let x = startX + i * (BALL_RADIUS * 2 * 0.866); // 0.866 is sin(60)
+                    let x = startX + i * (BALL_RADIUS * 2 * 0.9); // 0.9 讓堆疊緊密
                     let y = startY - (i * BALL_RADIUS) + (j * BALL_RADIUS * 2);
-                    // 加入微小隨機擾動避免堆疊時物理計算卡死
-                    balls.push(createBall(x, y, BALL_TYPES.RED));
-                    index++;
+                    balls.push(createBall(x + Math.random()*0.1, y + Math.random()*0.1, BALL_TYPES.RED));
                 }
             }
+            updateUI();
         }
 
         function createBall(x, y, typeInfo) {
@@ -402,15 +544,13 @@
                 color: typeInfo.color,
                 points: typeInfo.points,
                 type: typeInfo.type,
-                // 用於重置彩球
-                initialX: x,
-                initialY: y,
+                value: typeInfo.value || 0,
+                initialX: x, initialY: y,
                 inPocket: false
             };
         }
 
-        // --- 物理引擎 ---
-
+        // --- 物理引擎 (核心修正) ---
         function gameLoop() {
             updatePhysics();
             draw();
@@ -421,34 +561,58 @@
             if (!gameState.isMoving) return;
 
             let movingCount = 0;
-            const friction = 0.985; // 摩擦力係數
-            const stopThreshold = 0.05;
+            const steps = 8; // 增加步數以保證慢速下的精確度
 
-            // 子步長計算以提高精確度
-            const steps = 4; 
             for (let s = 0; s < steps; s++) {
                 balls.forEach(ball => {
                     if (ball.inPocket) return;
 
-                    // 移動
                     ball.x += ball.vx / steps;
                     ball.y += ball.vy / steps;
 
-                    // 邊界碰撞 (Cushions)
-                    // 左
-                    if (ball.x < BALL_RADIUS) { ball.x = BALL_RADIUS; ball.vx *= -0.8; }
-                    // 右
-                    if (ball.x > TABLE_WIDTH_BASE - BALL_RADIUS) { ball.x = TABLE_WIDTH_BASE - BALL_RADIUS; ball.vx *= -0.8; }
-                    // 上
-                    if (ball.y < BALL_RADIUS) { ball.y = BALL_RADIUS; ball.vy *= -0.8; }
-                    // 下
-                    if (ball.y > TABLE_HEIGHT_BASE - BALL_RADIUS) { ball.y = TABLE_HEIGHT_BASE - BALL_RADIUS; ball.vy *= -0.8; }
+                    // 1. 袋口與進球判定 (V1.0.5 重寫)
+                    let potted = false;
+                    let ignoreRail = false; // 是否忽略庫邊
 
-                    // 袋口檢測
-                    checkPocket(ball);
+                    for (let p of pockets) {
+                        const dx = ball.x - p.x;
+                        const dy = ball.y - p.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        // 進球判定
+                        if (dist < POCKET_RADIUS) {
+                            ball.inPocket = true;
+                            ball.vx = 0; ball.vy = 0;
+                            ball.x = -999; 
+                            gameState.pottedBalls.push(ball);
+                            potted = true;
+                            break;
+                        }
+                        
+                        // V1.0.5 關鍵邏輯: 
+                        // 如果球在袋口半徑的 1.5 倍範圍內，我們認為它正在進洞
+                        // 此時強制關閉庫邊碰撞，防止球被彈出
+                        if (dist < POCKET_RADIUS * 1.5) {
+                            ignoreRail = true;
+                        }
+                    }
+                    if (potted) return;
+
+                    // 2. 邊框檢測 (如果 nearPocket 則跳過)
+                    if (!ignoreRail) {
+                        const minX = RAIL_SIZE + ball.radius;
+                        const maxX = TABLE_WIDTH_BASE - RAIL_SIZE - ball.radius;
+                        const minY = RAIL_SIZE + ball.radius;
+                        const maxY = TABLE_HEIGHT_BASE - RAIL_SIZE - ball.radius;
+
+                        if (ball.x < minX) { ball.x = minX; ball.vx *= -CUSHION_RESTITUTION; }
+                        if (ball.x > maxX) { ball.x = maxX; ball.vx *= -CUSHION_RESTITUTION; }
+                        if (ball.y < minY) { ball.y = minY; ball.vy *= -CUSHION_RESTITUTION; }
+                        if (ball.y > maxY) { ball.y = maxY; ball.vy *= -CUSHION_RESTITUTION; }
+                    }
                 });
 
-                // 球與球碰撞
+                // 球間碰撞
                 for (let i = 0; i < balls.length; i++) {
                     for (let j = i + 1; j < balls.length; j++) {
                         let b1 = balls[i];
@@ -459,19 +623,16 @@
                 }
             }
 
-            // 應用摩擦力並檢查靜止
+            // 摩擦力
             balls.forEach(ball => {
                 if (ball.inPocket) return;
-                ball.vx *= friction;
-                ball.vy *= friction;
-
-                if (Math.abs(ball.vx) < stopThreshold) ball.vx = 0;
-                if (Math.abs(ball.vy) < stopThreshold) ball.vy = 0;
-
+                ball.vx *= FRICTION;
+                ball.vy *= FRICTION;
+                if (Math.abs(ball.vx) < STOP_THRESHOLD) ball.vx = 0;
+                if (Math.abs(ball.vy) < STOP_THRESHOLD) ball.vy = 0;
                 if (ball.vx !== 0 || ball.vy !== 0) movingCount++;
             });
 
-            // 檢查是否所有球都停止
             if (movingCount === 0 && gameState.isMoving) {
                 gameState.isMoving = false;
                 handleTurnEnd();
@@ -485,200 +646,178 @@
             const minDist = b1.radius + b2.radius;
 
             if (dist < minDist) {
-                // 碰撞處理 - 彈性碰撞
                 const angle = Math.atan2(dy, dx);
                 const sin = Math.sin(angle);
                 const cos = Math.cos(angle);
 
-                // 旋轉球的位置和速度到碰撞軸
-                // b1
-                const x1 = 0;
-                const y1 = 0;
                 const vx1 = b1.vx * cos + b1.vy * sin;
                 const vy1 = b1.vy * cos - b1.vx * sin;
-                // b2
-                const x2 = dist;
-                const y2 = 0;
                 const vx2 = b2.vx * cos + b2.vy * sin;
                 const vy2 = b2.vy * cos - b2.vx * sin;
 
-                // 一維碰撞公式
-                const vx1Final = vx2; // 質量相等交換速度
+                const vx1Final = vx2;
                 const vx2Final = vx1;
 
-                // 防止重疊 (分離)
                 const overlap = minDist - dist;
-                const pos1 = x1 - overlap / 2;
-                const pos2 = x2 + overlap / 2;
+                b1.x -= (overlap/2) * cos;
+                b1.y -= (overlap/2) * sin;
+                b2.x += (overlap/2) * cos;
+                b2.y += (overlap/2) * sin;
 
-                // 旋轉回原坐標系
-                // b1 final
-                b1.x = b1.x + (pos1 * cos - y1 * sin) - (x1 * cos - y1 * sin); // Update position only slightly
-                b1.y = b1.y + (pos1 * sin + y1 * cos) - (x1 * sin + y1 * cos);
                 b1.vx = vx1Final * cos - vy1 * sin;
                 b1.vy = vx1Final * sin + vy1 * cos;
-                // b2 final
-                b2.x += (pos2 * cos - y2 * sin) - (x2 * cos - y2 * sin); 
-                b2.y += (pos2 * sin + y2 * cos) - (x2 * sin + y2 * cos);
                 b2.vx = vx2Final * cos - vy2 * sin;
                 b2.vy = vx2Final * sin + vy2 * cos;
             }
         }
 
-        function checkPocket(ball) {
-            for (let p of pockets) {
-                const dx = ball.x - p.x;
-                const dy = ball.y - p.y;
-                if (Math.sqrt(dx*dx + dy*dy) < POCKET_RADIUS) {
-                    ball.inPocket = true;
-                    ball.vx = 0;
-                    ball.vy = 0;
-                    ball.x = -100; // 移出畫面
-                    
-                    if (gameState.isMoving) {
-                        gameState.pottedBalls.push(ball);
-                    }
-                }
-            }
-        }
-
-        // --- 規則與邏輯 ---
-
+        // --- 規則邏輯 ---
         function handleTurnEnd() {
             const potted = gameState.pottedBalls;
             let switchTurn = true;
             let score = 0;
             let foul = false;
-            let foulPoints = 4; // 基本罰分
+            let foulPoints = 4;
+            let frameEnded = false;
 
-            // 1. 檢查犯規 - 母球進袋
             const cuePotted = potted.find(b => b.type === 'cue');
             if (cuePotted) {
                 foul = true;
-                foulPoints = Math.max(foulPoints, 4); // 若有打進高分彩球犯規，取高分 (這裡簡化處理)
+                potted.forEach(b => {
+                   if (b.type === 'color' && b.points > foulPoints) foulPoints = b.points;
+                });
                 cueBall.inPocket = false;
-                cueBall.x = TABLE_WIDTH_BASE * 0.2;
-                cueBall.y = TABLE_HEIGHT_BASE * 0.5;
                 cueBall.vx = 0; cueBall.vy = 0;
-                gameState.isPlacingCue = true; // 母球手中球
+                cueBall.x = -100;
+                gameState.isPlacingCue = true;
             }
 
-            // 2. 檢查進球合法性 (簡化版)
-            // 如果沒有犯規，且有球進袋
-            if (!foul && potted.length > 0) {
-                const firstBall = potted[0]; // 簡單判定第一顆
-                
-                // 規則: 該打紅球
-                if (gameState.targetBall === 'red') {
-                    const wrongBall = potted.find(b => b.type !== 'red');
-                    if (wrongBall) {
-                        foul = true;
-                        foulPoints = Math.max(4, wrongBall.points);
+            if (!foul) {
+                if (potted.length === 0) {
+                    switchTurn = true;
+                } else {
+                    const firstBall = potted[0];
+                    if (gameState.redsRemaining > 0) {
+                        if (gameState.targetBall === 'red') {
+                            const wrong = potted.find(b => b.type !== 'red');
+                            if (wrong) {
+                                foul = true; 
+                                foulPoints = Math.max(4, wrong.points);
+                            } else {
+                                potted.forEach(b => score += b.points);
+                                gameState.redsRemaining -= potted.length;
+                                gameState.targetBall = 'color';
+                                switchTurn = false;
+                            }
+                        } else {
+                            const hasRed = potted.find(b => b.type === 'red');
+                            if (hasRed) { foul = true; } 
+                            else {
+                                potted.forEach(b => score += b.points);
+                                switchTurn = false;
+                                potted.forEach(b => {
+                                    b.inPocket = false;
+                                    b.x = b.initialX; b.y = b.initialY;
+                                    b.vx = 0; b.vy = 0;
+                                });
+                                gameState.targetBall = 'red';
+                            }
+                        }
                     } else {
-                        // 合法進紅球
-                        potted.forEach(b => score += b.points);
-                        gameState.redsRemaining -= potted.length;
-                        gameState.targetBall = 'color'; // 下一顆打彩球
-                        switchTurn = false; // 繼續
-                    }
-                } 
-                // 規則: 該打彩球
-                else {
-                    const hasRed = potted.find(b => b.type === 'red');
-                    if (hasRed) {
-                        foul = true;
-                    } else {
-                        // 合法進彩球 (必須只進一顆，這裡簡化允許多顆若是彩球)
-                        potted.forEach(b => score += b.points);
-                        switchTurn = false;
-                        
-                        // 若紅球還有，彩球需重置
-                        if (gameState.redsRemaining > 0) {
-                            gameState.targetBall = 'red';
-                            // Respot colors
-                            potted.forEach(b => {
+                        // 清彩球
+                        if (firstBall.points === gameState.minColorPoints) {
+                            score += firstBall.points;
+                            if (gameState.minColorPoints === 7) frameEnded = true;
+                            gameState.minColorPoints = getNextColorPoints(gameState.minColorPoints);
+                            switchTurn = false;
+                        } else {
+                            foul = true;
+                            foulPoints = Math.max(4, firstBall.points, gameState.minColorPoints);
+                             potted.forEach(b => {
                                 b.inPocket = false;
-                                b.x = b.initialX;
-                                b.y = b.initialY;
+                                b.x = b.initialX; b.y = b.initialY;
                                 b.vx = 0; b.vy = 0;
                             });
-                        } else {
-                            // 清彩球階段，不重置 (除了特定規則，這裡簡化為不重置)
-                             // 如果是清彩球階段，targetBall 應該要依序，這裡簡化處理保持 color
                         }
                     }
                 }
-            } else if (!foul && potted.length === 0) {
-                // 沒進球，換手
-                switchTurn = true;
-                // 若原本打彩球沒進，下一桿對手要打紅球 (除非紅球沒了)
-                if (gameState.redsRemaining > 0) gameState.targetBall = 'red';
             }
 
-            // 更新分數
             if (foul) {
-                // 對手加分
                 const opponent = gameState.currentPlayer === 1 ? 2 : 1;
                 gameState.scores[opponent] += foulPoints;
-                // 犯規強制換手 (除非 Free ball 規則，這裡簡化)
                 switchTurn = true;
                 if (gameState.redsRemaining > 0) gameState.targetBall = 'red';
-                
-                // 如果犯規且進了彩球，彩球要拿出來 (除了母球)
                 potted.forEach(b => {
-                    if(b.type !== 'cue' && b.type !== 'red') {
+                    if (b.type !== 'cue' && b.type !== 'red') {
                         b.inPocket = false;
-                        b.x = b.initialX;
-                        b.y = b.initialY;
+                        b.x = b.initialX; b.y = b.initialY;
+                        b.vx = 0; b.vy = 0;
                     }
                 });
             } else {
                 gameState.scores[gameState.currentPlayer] += score;
             }
 
-            if (switchTurn) {
-                gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+            if (frameEnded) {
+                endFrame();
+                return;
             }
 
-            // 清空進球緩存
+            if (switchTurn) {
+                gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+                if (gameState.redsRemaining > 0) gameState.targetBall = 'red';
+            }
+
             gameState.pottedBalls = [];
             gameState.isAiming = true;
-            gameState.power = 0;
-            resetPowerBarUI();
+            
+            resetPowerBarUI(50);
             updateUI();
         }
 
-        // --- 繪圖 (Rendering) ---
+        function endFrame() {
+            const p1 = gameState.scores[1];
+            const p2 = gameState.scores[2];
+            if (p1 > p2) gameState.frames[1]++;
+            else gameState.frames[2]++;
 
+            if (gameState.frames[1] === 2 || gameState.frames[2] === 2) {
+                alert(`Game Over! Player ${gameState.frames[1] === 2 ? 1 : 2} Wins!`);
+                resetGame(true);
+            } else {
+                alert(`Frame Over. Score: ${gameState.frames[1]} - ${gameState.frames[2]}`);
+                resetGame(false);
+            }
+        }
+
+        function getNextColorPoints(current) {
+            const sequence = [2, 3, 4, 5, 6, 7];
+            const idx = sequence.indexOf(current);
+            return (idx >= 0 && idx < sequence.length - 1) ? sequence[idx + 1] : 999;
+        }
+
+        // --- 繪圖邏輯 ---
         function draw() {
-            // 清空
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
             ctx.save();
             ctx.scale(scaleFactor, scaleFactor);
 
-            // 1. 繪製球桌
-            // 邊框
             ctx.fillStyle = COLORS.RAIL;
             ctx.fillRect(0, 0, TABLE_WIDTH_BASE, TABLE_HEIGHT_BASE);
-            // 檯面
             ctx.fillStyle = COLORS.FELT;
             ctx.fillRect(RAIL_SIZE, RAIL_SIZE, TABLE_WIDTH_BASE - RAIL_SIZE*2, TABLE_HEIGHT_BASE - RAIL_SIZE*2);
-            
-            // D 區線條
+
             ctx.beginPath();
-            ctx.strokeStyle = "rgba(255,255,255,0.3)";
+            ctx.strokeStyle = "rgba(255,255,255,0.2)";
             ctx.lineWidth = 2;
-            const dLineX = TABLE_WIDTH_BASE * 0.2;
-            ctx.moveTo(dLineX, RAIL_SIZE);
-            ctx.lineTo(dLineX, TABLE_HEIGHT_BASE - RAIL_SIZE);
+            ctx.moveTo(D_LINE_X, RAIL_SIZE);
+            ctx.lineTo(D_LINE_X, TABLE_HEIGHT_BASE - RAIL_SIZE);
             ctx.stroke();
-            // D 半圓
             ctx.beginPath();
-            ctx.arc(dLineX, TABLE_HEIGHT_BASE/2, 40, Math.PI/2, -Math.PI/2);
+            ctx.arc(D_LINE_X, TABLE_HEIGHT_BASE/2, D_ARC_RADIUS, Math.PI/2, -Math.PI/2);
             ctx.stroke();
 
-            // 2. 繪製袋口
             ctx.fillStyle = COLORS.POCKET;
             pockets.forEach(p => {
                 ctx.beginPath();
@@ -686,64 +825,54 @@
                 ctx.fill();
             });
 
-            // 3. 繪製球
             balls.forEach(ball => {
                 if (ball.inPocket) return;
-                
                 ctx.beginPath();
                 ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
                 ctx.fillStyle = ball.color;
                 ctx.fill();
-                
-                // 光影效果
                 ctx.beginPath();
                 ctx.arc(ball.x - 2, ball.y - 2, ball.radius/2, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+                ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
                 ctx.fill();
-                
-                // 邊緣
-                ctx.strokeStyle = "rgba(0,0,0,0.2)";
-                ctx.stroke();
             });
 
-            // 4. 繪製輔助線與球桿 (僅在瞄準模式)
             if (gameState.isAiming && !gameState.isMoving && !gameState.isPlacingCue) {
                 drawAimingGuide();
                 drawCueStick();
+            }
+
+            // 放置母球時的半透明預覽
+            if (gameState.isPlacingCue) {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                ctx.beginPath();
+                ctx.arc(cueBall.x, cueBall.y, BALL_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
             }
 
             ctx.restore();
         }
 
         function drawAimingGuide() {
-            // 計算母球行進向量
+            const alpha = 0.2 + (gameState.power / 100) * 0.6;
+            const guideLengthMult = 0.5 + (gameState.power / 100) * 1.5;
+
             const dx = Math.cos(gameState.aimAngle);
             const dy = Math.sin(gameState.aimAngle);
-            
-            // Raycast - 尋找撞擊點
             let hitDist = 1000;
             let hitBall = null;
 
-            // 檢查與球的碰撞
             for (let b of balls) {
                 if (b === cueBall || b.inPocket) continue;
-                
-                // 幾何計算: 射線到圓心的距離
                 const bx = b.x - cueBall.x;
                 const by = b.y - cueBall.y;
-                // 投影長度 = dot product
                 const proj = bx * dx + by * dy;
-                
                 if (proj > 0) {
-                    // 最近點距離平方
                     const distSq = (bx*bx + by*by) - (proj*proj);
                     const minDist = BALL_RADIUS * 2;
-                    
                     if (distSq < minDist * minDist) {
-                        // 會撞到
                         const backDist = Math.sqrt(minDist*minDist - distSq);
                         const impactDist = proj - backDist;
-                        
                         if (impactDist < hitDist) {
                             hitDist = impactDist;
                             hitBall = b;
@@ -751,122 +880,139 @@
                     }
                 }
             }
-
-            // 檢查邊界 (簡單做，僅畫線到邊緣)
-            // 這部分邏輯較複雜，這裡為了效能，主要顯示球的撞擊
-
+            
             const endX = cueBall.x + dx * hitDist;
             const endY = cueBall.y + dy * hitDist;
 
-            // 畫瞄準線
+            ctx.save();
+            ctx.globalAlpha = alpha;
+
             ctx.beginPath();
-            ctx.strokeStyle = COLORS.GUIDE;
-            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = COLORS.GUIDE_CUE;
+            ctx.setLineDash([4, 4]);
             ctx.moveTo(cueBall.x, cueBall.y);
             ctx.lineTo(endX, endY);
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // 畫 Ghost Ball (預測撞擊位置)
             if (hitBall) {
                 ctx.beginPath();
-                ctx.arc(endX, endY, BALL_RADIUS, 0, Math.PI * 2);
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+                ctx.arc(endX, endY, BALL_RADIUS, 0, Math.PI*2);
+                ctx.strokeStyle = "rgba(255,255,255,0.6)";
                 ctx.stroke();
 
-                // 畫撞擊後方向 (簡單切線)
-                // 這需要計算碰撞法線
-                /* 
-                   這是一個加分功能，為了程式碼長度與複雜度控制，
-                   這裡僅顯示主要的瞄準線，符合 Prompt 需求。
-                */
+                const collisionDx = hitBall.x - endX;
+                const collisionDy = hitBall.y - endY;
+                const len = Math.sqrt(collisionDx*collisionDx + collisionDy*collisionDy);
+                const normX = collisionDx / len;
+                const normY = collisionDy / len;
+
+                const targetLineLen = 50 * guideLengthMult;
+
+                ctx.beginPath();
+                ctx.strokeStyle = COLORS.GUIDE_TARGET;
+                ctx.lineWidth = 2;
+                ctx.moveTo(hitBall.x, hitBall.y);
+                ctx.lineTo(hitBall.x + normX * targetLineLen, hitBall.y + normY * targetLineLen);
+                ctx.stroke();
             }
+            ctx.restore();
         }
 
         function drawCueStick() {
-            const stickLen = 150;
-            const offset = 20 + gameState.power * 0.5; // 力道越大拉越遠
-            
+            const stickLen = 180;
+            const offset = 20 + gameState.power * 0.6;
             const dx = Math.cos(gameState.aimAngle);
             const dy = Math.sin(gameState.aimAngle);
-
             const startX = cueBall.x - dx * offset;
             const startY = cueBall.y - dy * offset;
             const endX = startX - dx * stickLen;
             const endY = startY - dy * stickLen;
 
             ctx.beginPath();
-            ctx.lineWidth = 6;
+            ctx.lineWidth = 5;
             ctx.strokeStyle = COLORS.CUE_STICK;
             ctx.lineCap = 'round';
             ctx.moveTo(startX, startY);
             ctx.lineTo(endX, endY);
             ctx.stroke();
-            
-            // 皮頭
-            ctx.beginPath();
-            ctx.lineWidth = 6;
-            ctx.strokeStyle = '#3366ff'; // 藍色巧克
-            ctx.moveTo(startX, startY);
-            ctx.lineTo(startX - dx * 3, startY - dy * 3);
-            ctx.stroke();
         }
 
-        // --- 輸入處理 (Input Handling) ---
-
+        // --- 輸入控制 ---
         let isDraggingPower = false;
 
         function setupInput() {
-            // Canvas 點擊/觸控 - 瞄準
+            const touchHandler = (handler) => (e) => {
+                if (e.target.tagName === 'CANVAS') e.preventDefault();
+                handler(e.touches ? e.touches[0] : e);
+            };
+
             canvas.addEventListener('mousedown', handleAimStart);
-            canvas.addEventListener('touchstart', (e) => handleAimStart(e.touches[0]));
-            
+            canvas.addEventListener('touchstart', touchHandler(handleAimStart), {passive: false});
+
             canvas.addEventListener('mousemove', handleAimMove);
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault(); // 防止滾動
-                handleAimMove(e.touches[0]);
-            });
+            canvas.addEventListener('touchmove', touchHandler(handleAimMove), {passive: false});
 
-            // 力道條控制
             const pBar = document.getElementById('power-bar-container');
-            
-            const startPowerDrag = (e) => {
-                isDraggingPower = true;
-                updatePowerFromInput(e);
+            const updatePower = (e) => {
+                if (gameState.isMoving) return;
+                const rect = pBar.getBoundingClientRect();
+                const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+                let val = rect.bottom - clientY;
+                let percent = (val / rect.height) * 100;
+                percent = Math.max(0, Math.min(100, percent));
+                
+                gameState.power = percent;
+                document.getElementById('power-fill').style.height = percent + '%';
+                updateFireButtonState();
             };
-            const movePowerDrag = (e) => {
-                if (isDraggingPower) updatePowerFromInput(e);
-            };
-            const endPowerDrag = () => {
-                if (isDraggingPower && gameState.power > 0) {
-                    shoot();
+
+            const startDrag = (e) => { isDraggingPower = true; updatePower(e); };
+            const endDrag = () => { isDraggingPower = false; };
+
+            pBar.addEventListener('mousedown', startDrag);
+            pBar.addEventListener('touchstart', (e) => { e.preventDefault(); startDrag(e.touches[0]); });
+
+            window.addEventListener('mousemove', (e) => { if(isDraggingPower) updatePower(e); });
+            window.addEventListener('touchmove', (e) => { if(isDraggingPower) updatePower(e); });
+            window.addEventListener('mouseup', endDrag);
+            window.addEventListener('touchend', endDrag);
+
+            document.getElementById('fire-btn').addEventListener('click', shoot);
+
+            // V1.0.5: 重設按鈕 -> 回到「擺球」狀態
+            document.getElementById('reset-cue-btn').addEventListener('click', () => {
+                if (!gameState.isMoving && !gameState.isPlacingCue) {
+                    gameState.isPlacingCue = true;
+                    // 先把球移回棕球點當作預設
+                    cueBall.x = D_LINE_X;
+                    cueBall.y = TABLE_HEIGHT_BASE / 2;
+                    showTempMsg("請點擊 D 區放置母球");
+                    updateUI(); // 更新介面以隱藏重設按鈕
                 }
-                isDraggingPower = false;
-            };
-
-            pBar.addEventListener('mousedown', startPowerDrag);
-            pBar.addEventListener('touchstart', (e) => { e.preventDefault(); startPowerDrag(e.touches[0]); });
-
-            window.addEventListener('mousemove', (e) => {
-                if(isDraggingPower) movePowerDrag(e);
-            });
-            window.addEventListener('touchmove', (e) => {
-                 if(isDraggingPower) movePowerDrag(e.touches[0]);
             });
 
-            window.addEventListener('mouseup', endPowerDrag);
-            window.addEventListener('touchend', endPowerDrag);
+            document.getElementById('btn-left').addEventListener('click', () => adjustAngle(-0.005));
+            document.getElementById('btn-right').addEventListener('click', () => adjustAngle(0.005));
 
-            // 微調按鈕
-            document.getElementById('btn-left').addEventListener('click', () => adjustAngle(-0.02));
-            document.getElementById('btn-right').addEventListener('click', () => adjustAngle(0.02));
-
-            // Modal
             document.getElementById('info-btn').addEventListener('click', () => {
                 document.getElementById('modal-overlay').style.display = 'flex';
             });
             document.getElementById('modal-close').addEventListener('click', () => {
                 document.getElementById('modal-overlay').style.display = 'none';
+            });
+        }
+
+        function setupAccordion() {
+            const details = document.querySelectorAll('details.version-block');
+            details.forEach((targetDetail) => {
+                targetDetail.addEventListener('click', () => {
+                    details.forEach((d) => {
+                        if (d !== targetDetail) {
+                            d.removeAttribute('open');
+                        }
+                    });
+                });
             });
         }
 
@@ -883,100 +1029,139 @@
             const pos = getLogicPos(e.clientX, e.clientY);
 
             if (gameState.isPlacingCue) {
-                // 放置母球
-                if (pos.x >= 0 && pos.x <= TABLE_WIDTH_BASE && pos.y >= 0 && pos.y <= TABLE_HEIGHT_BASE) {
-                    cueBall.x = pos.x;
-                    cueBall.y = pos.y;
-                    gameState.isPlacingCue = false;
-                    document.getElementById('status-msg').innerText = "點擊檯面瞄準，拖曳右側力道條出桿";
+                // D區判定
+                const dCenterY = TABLE_HEIGHT_BASE / 2;
+                const dist = Math.sqrt(Math.pow(pos.x - D_LINE_X, 2) + Math.pow(pos.y - dCenterY, 2));
+                
+                if (pos.x <= D_LINE_X && dist <= D_ARC_RADIUS) {
+                    let collision = false;
+                    for (let b of balls) {
+                        if (b === cueBall || b.inPocket) continue;
+                        const distSq = Math.pow(pos.x - b.x, 2) + Math.pow(pos.y - b.y, 2);
+                        if (distSq < Math.pow(BALL_RADIUS * 2 + 1, 2)) {
+                            collision = true;
+                            break;
+                        }
+                    }
+
+                    if (collision) {
+                        showTempMsg("位置重疊！", true);
+                    } else {
+                        cueBall.x = pos.x;
+                        cueBall.y = pos.y;
+                        gameState.isPlacingCue = false; 
+                        updateUI();
+                    }
+                } else {
+                    showTempMsg("請放置在 D 區半圓內", true);
                 }
             } else {
-                // 設定角度
                 updateAimAngle(pos.x, pos.y);
             }
         }
 
         function handleAimMove(e) {
             if (gameState.isMoving || gameState.isPlacingCue) return;
-            // 只有按住滑鼠時才連續瞄準? 或者滑過就瞄準
-            // 這裡設定為滑鼠移動即瞄準
-            if (e.buttons === 1 || e.type === 'touchmove') { 
+            if (e.buttons === 1 || e.type === 'touchmove') {
                 const pos = getLogicPos(e.clientX, e.clientY);
                 updateAimAngle(pos.x, pos.y);
             }
         }
 
-        function updateAimAngle(targetX, targetY) {
-            const dx = targetX - cueBall.x;
-            const dy = targetY - cueBall.y;
+        function updateAimAngle(tx, ty) {
+            const dx = tx - cueBall.x;
+            const dy = ty - cueBall.y;
             gameState.aimAngle = Math.atan2(dy, dx);
         }
 
         function adjustAngle(delta) {
-            if (gameState.isMoving) return;
+            if (gameState.isMoving || gameState.isPlacingCue) return;
             gameState.aimAngle += delta;
         }
 
-        function updatePowerFromInput(e) {
-            if (gameState.isMoving) return;
-            
-            const bar = document.getElementById('power-bar-container');
-            const rect = bar.getBoundingClientRect();
-            // 計算在 bar 內的相對高度 (由下往上)
-            const clientY = e.clientY || e.touches?.[0].clientY;
-            let val = rect.bottom - clientY;
-            if (val < 0) val = 0;
-            if (val > rect.height) val = rect.height;
-            
-            const percent = (val / rect.height) * 100;
-            gameState.power = Math.min(100, Math.max(0, percent));
-            
-            document.getElementById('power-fill').style.height = gameState.power + '%';
-        }
-
-        function resetPowerBarUI() {
-            document.getElementById('power-fill').style.height = '0%';
+        function updateFireButtonState() {
+            const btn = document.getElementById('fire-btn');
+            if (!gameState.isMoving && !gameState.isPlacingCue && gameState.power > 0) {
+                btn.classList.add('ready');
+            } else {
+                btn.classList.remove('ready');
+            }
         }
 
         function shoot() {
-            if (gameState.isMoving) return;
-
-            const force = gameState.power * 0.35; // 力道係數
+            if (gameState.isMoving || gameState.isPlacingCue || gameState.power <= 0) return;
+            
+            const force = gameState.power * FORCE_MULTIPLIER; 
+            
             const dx = Math.cos(gameState.aimAngle);
             const dy = Math.sin(gameState.aimAngle);
 
             cueBall.vx = dx * force;
             cueBall.vy = dy * force;
-
             gameState.isMoving = true;
             gameState.isAiming = false;
+            
+            updateFireButtonState(); 
+        }
+
+        function resetPowerBarUI(defaultValue = 0) {
+            gameState.power = defaultValue;
+            document.getElementById('power-fill').style.height = defaultValue + '%';
+            updateFireButtonState();
+        }
+
+        function showTempMsg(text, isError = false) {
+            const el = document.getElementById('status-msg');
+            el.innerText = text;
+            el.style.color = isError ? '#ff6666' : '#66ff66';
+            setTimeout(() => {
+                updateUI(); 
+                el.style.color = '#eee';
+            }, 2000);
         }
 
         function updateUI() {
-            const p1 = document.getElementById('p1-score');
-            const p2 = document.getElementById('p2-score');
-            p1.innerText = `P1: ${gameState.scores[1]}`;
-            p2.innerText = `P2: ${gameState.scores[2]}`;
+            document.getElementById('p1-score').innerText = gameState.scores[1];
+            document.getElementById('p2-score').innerText = gameState.scores[2];
+            document.getElementById('frame-score').innerText = `${gameState.frames[1]} - ${gameState.frames[2]}`;
 
+            const sb = document.getElementById('scoreboard');
             if (gameState.currentPlayer === 1) {
-                p1.classList.add('active-turn');
-                p2.classList.remove('active-turn');
+                sb.classList.add('active-p1'); sb.classList.remove('active-p2');
             } else {
-                p2.classList.add('active-turn');
-                p1.classList.remove('active-turn');
+                sb.classList.add('active-p2'); sb.classList.remove('active-p1');
             }
-            
-            let statusText = "";
+
+            const resetBtn = document.getElementById('reset-cue-btn');
+            const fireBtn = document.getElementById('fire-btn');
+
+            let msg = "";
             if (gameState.isPlacingCue) {
-                statusText = "母球犯規：請點擊檯面放置母球";
+                msg = `玩家 ${gameState.currentPlayer} (手中球): 請點擊 D 區放置母球`;
+                resetBtn.style.display = 'none'; // 正在放置時不顯示重設按鈕(因為就在放置中)
+                fireBtn.style.opacity = 0; 
             } else {
-                const targetText = gameState.targetBall === 'red' ? "紅球 (1分)" : "彩球 (2-7分)";
-                statusText = `玩家 ${gameState.currentPlayer} 回合 | 目標: ${targetText}`;
+                // V1.0.5: 只有在瞄準狀態且非移動中才顯示「重新擺球」
+                if (!gameState.isMoving) {
+                    resetBtn.style.display = 'block';
+                } else {
+                    resetBtn.style.display = 'none';
+                }
+                fireBtn.style.opacity = 0.5; 
+                
+                let targetText = "";
+                if (gameState.redsRemaining > 0) {
+                    targetText = gameState.targetBall === 'red' ? "紅球 (1分)" : "任意彩球";
+                } else {
+                    const colorNames = {2:'黃',3:'綠',4:'棕',5:'藍',6:'粉',7:'黑'};
+                    targetText = `${colorNames[gameState.minColorPoints]}球 (${gameState.minColorPoints}分)`;
+                }
+                msg = `P${gameState.currentPlayer} 回合 | 目標: ${targetText}`;
             }
-            document.getElementById('status-msg').innerText = statusText;
+            document.getElementById('status-msg').innerText = msg;
+            updateFireButtonState();
         }
 
-        // 啟動遊戲
         init();
 
     </script>
