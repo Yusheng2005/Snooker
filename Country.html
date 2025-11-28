@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>世界國家抽籤機 V6.0</title>
+    <style>
+        :root {
+            --primary-color: #3f51b5; /* 深藍色 */
+            --secondary-color: #ff9800; /* 橘色 (用於按鈕) */
+            --bg-color: #e8eaf6; 
+            --card-bg: #ffffff;
+            --main-list-color: #f3f4f6; /* 正選方磚背景 (淺灰) */
+            --wait-list-color: #fffde7; /* 備取方磚背景 (淺黃) */
+            --tile-text-color-initial: #b0bec5; /* 初始待抽籤文字顏色 (淺灰) */
+            --button-text-color-initial: #000000; /* 初始按鍵文字顏色 (黑色) */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: var(--bg-color);
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            max-width: 1000px;
+            width: 95%;
+            position: relative;
+            margin-top: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 2.5em;
+        }
+
+        #drawButton {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            text-align: center;
+            font-size: 20px;
+            margin: 0 auto 30px auto;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: background-color 0.3s, transform 0.1s;
+            font-weight: bold;
+            display: block;
+            min-width: 250px;
+        }
+
+        /* 修正按鍵樣式 */
+        #drawButton.initial-state {
+            background-color: #e0e0e0; 
+            color: var(--button-text-color-initial); 
+        }
+
+        #drawButton:hover:not(:disabled):not(.initial-state) {
+            background-color: #f57c00;
+        }
+        
+        #drawButton:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            color: #616161;
+        }
+
+        /* 抽籤結果 Grid 佈局 */
+        #resultsGrid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* 5 欄 */
+            gap: 10px; /* 方磚間距 */
+            margin-top: 20px;
+        }
+
+        .country-tile {
+            background-color: var(--main-list-color);
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 80px; 
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .tile-index {
+            font-size: 0.8em;
+            color: #607d8b;
+            margin-bottom: 5px;
+        }
+        
+        /* 初始狀態的方磚文字顏色 */
+        .country-tile-content-initial {
+            color: var(--tile-text-color-initial);
+        }
+
+        /* 備取國家樣式 (第 21 格開始) */
+        .country-tile.wait-tile {
+            background-color: var(--wait-list-color);
+            border-color: #fbc02d; 
+            /* 由於沒有虛線，這裡不需要特殊 margin-top */
+        }
+        
+        /* 動畫效果 (老虎機) */
+        .spinning {
+            animation: spin 0.1s ease-in-out infinite alternate;
+            background-color: #ffcdd2 !important; 
+            transform: scale(1.05);
+        }
+        @keyframes spin {
+            from { transform: translateY(0) rotateX(0deg); opacity: 1; }
+            to { transform: translateY(-5px) rotateX(5deg); opacity: 0.8; }
+        }
+
+        /* Icon 樣式 */
+        #listIcon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 30px;
+            cursor: pointer;
+            color: var(--primary-color);
+            transition: color 0.2s, transform 0.2s;
+        }
+        #listIcon:hover {
+            color: #000;
+            transform: scale(1.1);
+        }
+        
+        /* Modal 樣式 (為簡潔省略) */
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto; position: relative; }
+        .close { color: #aaa; float: right; font-size: 36px; font-weight: bold; line-height: 1; }
+        #countryEditor { margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
+        #countryInput { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        #editorButtons { display: flex; gap: 10px; }
+        #editorButtons button { flex-grow: 1; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; font-weight: bold; }
+        #addCountryButton { background-color: #4caf50; color: white; }
+        #addCountryButton:hover { background-color: #45a049; }
+        #clearListButton { background-color: #f44336; color: white; }
+        #clearListButton:hover { background-color: #d32f2f; }
+        #currentListContainer { max-height: 250px; overflow-y: auto; margin-top: 10px; padding-right: 10px; border: 1px solid #eee; border-radius: 4px; }
+        .country-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px dashed #eee; }
+        .remove-btn { color: #f44336; cursor: pointer; font-weight: bold; font-size: 1.1em; margin-left: 10px; }
+
+        /* 響應式設計 (RWD) */
+        @media (max-width: 768px) {
+            #resultsGrid {
+                grid-template-columns: repeat(3, 1fr); /* 手機上變為 3 欄 */
+            }
+            .country-tile {
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>世界國家抽籤機</h1>
+
+    <!-- 國家清單 Icon -->
+    <div id="listIcon" title="編輯國家清單">&#9998;</div> 
+
+    <button id="drawButton" class="initial-state" onclick="startDraw()">點擊按鍵開始抽籤</button>
+
+    <div id="results">
+        <div id="resultsGrid">
+            <!-- 初始提示方磚 (共 30 個) -->
+            <script>
+                // 總共 30 格 (20正選 + 10備取)
+                for(let i=1; i<=30; i++) { 
+                    let tileIndex = (i <= 20) ? `正選 ${i}` : `備取 ${i - 20}`;
+                    let tileClass = (i > 20) ? 'wait-tile' : ''; 
+                    document.write(`
+                        <div class="country-tile ${tileClass}">
+                            <div class="tile-index">${tileIndex}</div>
+                            <div class="country-tile-content-initial">待抽籤</div>
+                        </div>
+                    `);
+                }
+            </script>
+        </div>
+    </div>
+</div>
+
+<!-- 國家清單 Modal 彈出視窗 -->
+<div id="countryListModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>編輯國家/地區清單 (共 <span id="countryCount">0</span> 個)</h2>
+        
+        <div id="countryEditor">
+            <p><strong>新增國家 (以逗號或換行分隔):</strong></p>
+            <textarea id="countryInput" rows="3" placeholder="例如: 台灣, 日本, 韓國"></textarea>
+            <div id="editorButtons">
+                <button id="addCountryButton" onclick="addCountries()">新增/更新</button>
+                <button id="clearListButton" onclick="clearList()">載入預設列表</button>
+            </div>
+
+            <p style="margin-top: 15px;"><strong>當前列表:</strong></p>
+            <div id="currentListContainer">
+                <div id="allCountriesList">
+                    <!-- 國家清單將由 JavaScript 載入 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 國家/地區清單 (與 V5 相同)
+    const defaultCountries = [
+        "台灣", "香港", "澳大利亞", "孟加拉", "不丹", "汶萊", "柬埔寨", "庫克群島", "朝鮮", "東帝汶", 
+        "斐濟", "印度", "印尼", "日本", "吉里巴斯", "寮國", "馬來西亞", "馬爾地夫", "馬紹爾", "密克羅尼西亞", 
+        "緬甸", "諾魯", "尼泊爾", "紐西蘭", "紐埃", "帛琉", "巴布亞紐幾內亞", "菲律賓", "韓國",
+        "薩摩亞", "新加坡", "索羅門", "斯里蘭卡", "泰國", "東加", "吐瓦魯", "萬那杜", "越南",
+        "阿富汗", "亞美尼亞", "亞塞拜然", "巴林", "白俄羅斯", "喬治亞", "伊朗", "伊拉克", "以色列", "約旦", 
+        "哈薩克", "科威特", "吉爾吉斯", "黎巴嫩", "摩爾多瓦", "蒙古", "阿曼", "巴基斯坦", "卡達", "俄羅斯", 
+        "沙烏地阿拉伯", "敘利亞", "塔吉克", "土耳其", "土庫曼", "阿聯", "烏克蘭", "烏茲別克", "葉門",
+        "阿爾及利亞", "安哥拉", "貝南", "波札那", "布吉納法索", "蒲隆地", "喀麥隆", "維德角", "中非", "查德", 
+        "葛摩", "剛果", "象牙海岸", "吉布地", "民主剛果", "埃及", "赤道幾內亞", "厄利垂亞", "史瓦帝尼", "衣索比亞", 
+        "加彭", "甘比亞", "迦納", "幾內亞", "幾內亞比索", "肯亞", "賴索托", "賴比瑞亞", "利比亞", "馬達加斯加", 
+        "馬拉威", "馬利", "茅利塔尼亞", "模里西斯", "摩洛哥", "莫三比克", "納米比亞", "尼日", "奈及利亞", "盧安達", 
+        "聖多美", "塞內加爾", "塞席爾", "獅子山", "索馬利亞", "南非", "南蘇丹", "蘇丹", "坦尚尼亞", "多哥", 
+        "突尼西亞", "烏干達", "尚比亞", "辛巴威",
+        "阿爾巴尼亞", "安道爾", "奧地利", "比利時", "波士尼亞", "保加利亞", "克羅埃西亞", "賽普勒斯", "捷克", "丹麥", 
+        "愛沙尼亞", "歐盟", "芬蘭", "法國", "德國", "希臘", "教廷", "匈牙利", "冰島", "愛爾蘭", 
+        "義大利", "科索沃", "拉脫維亞", "列支敦斯登", "立陶宛", "盧森堡", "馬爾他", "摩納哥", "蒙特內哥羅", "北馬其頓", 
+        "挪威", "馬爾他騎士團", "波蘭", "葡萄牙", "羅馬尼亞", "聖馬利諾", "塞爾維亞", "斯洛伐克", "斯洛維尼亞", "西班牙", 
+        "瑞典", "瑞士", "荷蘭", "英國",
+        "加拿大", "美國", 
+        "安地卡", "阿根廷", "巴哈馬", "巴貝多", "貝里斯", "玻利維亞", "巴西", "智利", "哥倫比亞", "哥斯大黎加", 
+        "古巴", "多米尼克", "多明尼加", "厄瓜多", "薩爾瓦多", "格瑞那達", "瓜地馬拉", "蓋亞那", "海地", "宏都拉斯", 
+        "牙買加", "墨西哥", "尼加拉瓜", "巴拿馬", "巴拉圭", "秘魯", "聖克里斯多福", "聖露西亞", "聖文森國", "蘇利南", 
+        "千里達", "烏拉圭", "委內瑞拉"
+    ];
+
+    let allCountries = []; 
+    const DRAW_COUNT = 20; 
+    const WAIT_COUNT = 10; // 備取數量改為 10
+    const TOTAL_COUNT = DRAW_COUNT + WAIT_COUNT; // 總抽籤數改為 30
+    const DRAW_ANIMATION_DURATION = 3000; 
+    
+    // DOM 元素參考
+    const modal = document.getElementById('countryListModal');
+    const listIcon = document.getElementById('listIcon');
+    const allCountriesListDiv = document.getElementById('allCountriesList');
+    const countryCountSpan = document.getElementById('countryCount');
+    const resultsGrid = document.getElementById('resultsGrid');
+    const drawButton = document.getElementById('drawButton');
+
+    // ---------------------- 抽籤核心邏輯 ----------------------
+
+    function shuffleArray(array) { let arr = [...array]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+    
+    function startDraw() { 
+        if (allCountries.length < TOTAL_COUNT) { alert(`國家數量不足！至少需要 ${TOTAL_COUNT} 個國家才能抽籤。\n當前數量: ${allCountries.length} 個。`); return; } 
+        drawButton.disabled = true; drawButton.textContent = '抽籤中...'; drawButton.classList.remove('initial-state'); 
+        animateDraw(true); 
+        setTimeout(() => { 
+            const drawn = shuffleArray(allCountries).slice(0, TOTAL_COUNT); 
+            animateDraw(false); 
+            renderResults(drawn); 
+            drawButton.disabled = false; drawButton.textContent = '重新抽籤'; 
+        }, DRAW_ANIMATION_DURATION); 
+    }
+    
+    function animateDraw(isSpinning) { 
+        const tiles = resultsGrid.querySelectorAll('.country-tile'); 
+        if (isSpinning) { 
+            tiles.forEach((tile) => { 
+                tile.classList.add('spinning'); 
+                const contentDiv = tile.querySelector('div:last-child'); 
+                contentDiv.classList.remove('country-tile-content-initial'); 
+                const interval = setInterval(() => { 
+                    if (tile.classList.contains('spinning')) { 
+                        const randomIndex = Math.floor(Math.random() * allCountries.length); 
+                        contentDiv.textContent = allCountries[randomIndex]; 
+                    } else { clearInterval(interval); } 
+                }, 100); 
+                tile.dataset.interval = interval; 
+            }); 
+        } else { 
+            tiles.forEach(tile => { 
+                clearInterval(parseInt(tile.dataset.interval)); 
+                tile.classList.remove('spinning'); 
+            }); 
+        } 
+    }
+    
+    function renderResults(drawnCountries) { 
+        resultsGrid.innerHTML = ''; 
+        drawnCountries.forEach((country, index) => { 
+            const isMain = index < DRAW_COUNT; 
+            const tile = document.createElement('div'); 
+            tile.classList.add('country-tile'); 
+            if (!isMain) { tile.classList.add('wait-tile'); } 
+            let tileIndexText = isMain ? `正選 ${index + 1}` : `備取 ${index - DRAW_COUNT + 1}`; 
+            tile.innerHTML = `<div class="tile-index">${tileIndexText}</div><div>${country}</div>`; 
+            resultsGrid.appendChild(tile); 
+        }); 
+    }
+
+    // ---------------------- 列表管理與儲存 ----------------------
+
+    function saveCountries() { try { localStorage.setItem('worldDrawCountries', JSON.stringify(allCountries)); } catch (e) {} }
+    function loadSavedCountries() { try { const saved = localStorage.getItem('worldDrawCountries'); if (saved) { allCountries = JSON.parse(saved); } else { allCountries = [...defaultCountries]; } } catch (e) { allCountries = [...defaultCountries]; } }
+    function loadCountryList() { 
+        allCountriesListDiv.innerHTML = ''; countryCountSpan.textContent = allCountries.length; 
+        allCountries.forEach((country, index) => { 
+            const item = document.createElement('div'); item.classList.add('country-item'); 
+            item.innerHTML = `<span>${country}</span><span class="remove-btn" onclick="removeCountry(${index})">❌</span>`; 
+            allCountriesListDiv.appendChild(item); 
+        }); 
+    }
+    window.removeCountry = function(index) { if (confirm(`確定要從清單中移除「${allCountries[index]}」嗎?`)) { allCountries.splice(index, 1); saveCountries(); loadCountryList(); } }
+    window.clearList = function() { if (confirm("確定要將國家列表重置為預設的完整列表嗎？")) { allCountries = [...defaultCountries]; saveCountries(); loadCountryList(); } }
+    window.addCountries = function() { 
+        const input = document.getElementById('countryInput'); const rawText = input.value.trim(); if (!rawText) return; 
+        const newCountries = rawText.split(/[,，\n\s]+/).map(c => c.trim()).filter(c => c.length > 0); 
+        newCountries.forEach(country => { if (!allCountries.includes(country)) { allCountries.push(country); } }); 
+        input.value = ''; saveCountries(); loadCountryList(); 
+    }
+
+    // ---------------------- Modal 處理 ----------------------
+
+    window.closeModal = function() { modal.style.display = "none"; }
+    listIcon.onclick = function() { loadCountryList(); modal.style.display = "block"; }
+    window.onclick = function(event) { if (event.target == modal) { closeModal(); } }
+
+    // 頁面加載完成時執行
+    document.addEventListener('DOMContentLoaded', () => { 
+        loadSavedCountries(); 
+        loadCountryList(); 
+    });
+
+</script>
+
+</body>
+</html>
