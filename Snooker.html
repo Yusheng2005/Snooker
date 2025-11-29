@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Snooker V1.0.5</title>
+    <title>Snooker V1.0.10</title>
     <style>
-        /* --- CSS 樣式區域 (V1.0.5) --- */
+        /* --- CSS 樣式區域 (V1.0.10) --- */
         body {
             margin: 0;
             padding: 0;
-            background-color: #121212;
+            background-color: #050505;
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             touch-action: none;
@@ -24,254 +24,163 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #1a1a1a;
+            background: #121212;
         }
 
         canvas {
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            border-radius: 4px; /* 邊角稍微銳利一點 */
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9);
+            border-radius: 4px;
             cursor: crosshair;
         }
 
         .ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
         }
 
         /* 記分板 */
         #scoreboard {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 70%;
-            max-width: 500px;
-            height: 55px;
-            background: linear-gradient(to bottom, #2c3e50, #000);
-            border-bottom-left-radius: 12px;
-            border-bottom-right-radius: 12px;
-            border: 1px solid #444;
-            border-top: none;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-            pointer-events: auto;
-            color: #fff;
-            z-index: 10;
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 600px; height: 60px;
+            background: linear-gradient(to bottom, #1f2a36, #000);
+            border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;
+            border: 1px solid #444; border-top: none;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.7);
+            pointer-events: auto; color: #fff; z-index: 10;
         }
-
-        .player-info { display: flex; flex-direction: column; align-items: center; width: 80px; }
-        .player-name { font-size: 12px; color: #aaa; margin-bottom: 2px; }
-        .score-val { font-size: 24px; font-weight: bold; color: #fff; line-height: 1; }
-        
+        .player-info { display: flex; flex-direction: column; align-items: center; width: 100px; }
+        .player-name { font-size: 12px; color: #888; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px;}
+        .score-val { font-size: 28px; font-weight: bold; color: #fff; line-height: 1; font-family: 'Courier New', Courier, monospace; }
         #frame-info {
             display: flex; flex-direction: column; align-items: center;
-            background: #111; padding: 2px 15px; border-radius: 6px;
-            border: 1px solid #555; min-width: 90px;
+            background: #111; padding: 4px 20px; border-radius: 4px;
+            border: 1px solid #333; min-width: 100px;
         }
-        #frame-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        #frame-score { font-size: 18px; color: #ffd700; font-weight: bold; }
-
-        .active-p1 .player-info:first-child .score-val { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
-        .active-p2 .player-info:last-child .score-val { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        #frame-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 2px; }
+        #frame-score { font-size: 18px; color: #eebb00; font-weight: bold; }
+        .active-p1 .player-info:first-child .score-val { color: #eebb00; text-shadow: 0 0 15px rgba(238, 187, 0, 0.6); }
+        .active-p2 .player-info:last-child .score-val { color: #eebb00; text-shadow: 0 0 15px rgba(238, 187, 0, 0.6); }
 
         /* 力道條 */
         #power-bar-container {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 24px;
-            height: 200px;
-            background: #222;
-            border: 2px solid #555;
-            border-radius: 12px;
-            pointer-events: auto;
-            overflow: hidden;
-            z-index: 20;
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            width: 28px; height: 250px; background: #000;
+            border: 2px solid #555; border-radius: 14px;
+            pointer-events: auto; overflow: hidden; z-index: 20;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
         #power-fill {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 50%;
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 50%;
             background: linear-gradient(to top, #2ecc71, #f1c40f, #e74c3c);
-            transition: height 0.1s linear;
+            transition: height 0.05s linear;
         }
         #power-label {
-            position: absolute;
-            right: 45px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255,255,255,0.4);
-            font-size: 10px;
-            writing-mode: vertical-rl;
-            letter-spacing: 3px;
+            position: absolute; right: 55px; top: 50%; transform: translateY(-50%);
+            color: rgba(255,255,255,0.3); font-size: 10px;
+            writing-mode: vertical-rl; letter-spacing: 4px;
         }
 
         /* SHOOT 按鈕 */
         #fire-btn {
-            position: absolute;
-            right: 50px;
-            bottom: 20%;
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #e74c3c, #c0392b);
-            border: 3px solid #fff;
-            box-shadow: 0 0 15px rgba(231, 76, 60, 0.6);
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            pointer-events: auto;
-            transition: transform 0.1s, opacity 0.2s;
-            opacity: 0.5;
-            pointer-events: none;
-            user-select: none;
-            z-index: 20;
-        }
-        #fire-btn.ready {
-            opacity: 1;
-            pointer-events: auto;
-            animation: pulse 2s infinite;
-        }
-        #fire-btn:active { transform: scale(0.95); }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-        }
-
-        /* V1.0.5 重設按鈕: 改為「重新擺球」 */
-        #reset-cue-btn {
-            position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(50, 50, 50, 0.8);
-            color: #ddd;
-            border: 1px solid #777;
-            padding: 8px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            pointer-events: auto;
-            display: none; /* 預設隱藏，瞄準時顯示 */
-            font-size: 13px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-            z-index: 50;
-            transition: background 0.2s;
-        }
-        #reset-cue-btn:hover { background: rgba(80, 80, 80, 0.9); color: #fff; }
-
-        /* 控制按鈕 */
-        #info-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 32px;
-            height: 32px;
-            background: #444;
-            color: white;
-            border: 1px solid #777;
-            border-radius: 50%;
-            font-family: serif; font-weight: bold; font-size: 18px;
+            position: absolute; right: 60px; bottom: 20%;
+            width: 80px; height: 80px; border-radius: 50%;
+            background: radial-gradient(circle, #c0392b, #800000);
+            border: 4px solid #ddd;
+            box-shadow: 0 0 20px rgba(192, 57, 43, 0.6);
+            color: white; font-weight: bold; font-size: 18px;
             display: flex; justify-content: center; align-items: center;
             cursor: pointer; pointer-events: auto;
-            z-index: 30;
+            transition: transform 0.1s, opacity 0.2s;
+            opacity: 0.5; pointer-events: none; user-select: none; z-index: 20;
+        }
+        #fire-btn.ready { opacity: 1; pointer-events: auto; animation: pulse 2s infinite; cursor: pointer;}
+        #fire-btn:active { transform: scale(0.95); }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(192, 57, 43, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); }
         }
 
+        /* 重新擺球按鈕 */
+        #reset-cue-btn {
+            position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(30, 30, 30, 0.95);
+            color: #ddd; border: 1px solid #888;
+            padding: 10px 25px; border-radius: 25px;
+            cursor: pointer; pointer-events: auto;
+            display: none; 
+            font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 50;
+            transition: background 0.2s;
+        }
+        #reset-cue-btn:hover { background: rgba(80, 80, 80, 1); color: #fff; border-color: #fff; }
+
+        /* 資訊按鈕 */
+        #info-btn {
+            position: absolute; top: 20px; right: 20px; width: 36px; height: 36px;
+            background: #333; color: white; border: 2px solid #666; border-radius: 50%;
+            font-family: serif; font-weight: bold; font-size: 20px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; pointer-events: auto; z-index: 30;
+            transition: background 0.2s;
+        }
+        #info-btn:hover { background: #555; }
+
+        /* 微調按鈕 */
         #controls-bottom {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 60px;
-            pointer-events: auto;
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 80px; pointer-events: auto;
         }
         .adjust-btn {
-            width: 50px; height: 50px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            color: white; font-size: 20px;
+            width: 60px; height: 60px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%; color: rgba(255,255,255,0.8); font-size: 24px;
             display: flex; justify-content: center; align-items: center;
-            cursor: pointer; transition: background 0.1s;
+            cursor: pointer; transition: background 0.1s, transform 0.1s;
+            user-select: none; -webkit-user-select: none;
         }
-        .adjust-btn:active { background: rgba(255, 255, 255, 0.3); }
+        .adjust-btn:active { background: rgba(255, 255, 255, 0.2); transform: scale(0.95); }
 
         #status-msg {
-            position: absolute;
-            bottom: 85px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #eee;
-            background: rgba(0,0,0,0.7);
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            pointer-events: none;
-            white-space: nowrap;
-            z-index: 15;
-            transition: color 0.3s;
+            position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%);
+            color: #ccc; background: rgba(0,0,0,0.8);
+            padding: 8px 20px; border-radius: 30px;
+            font-size: 14px; pointer-events: none;
+            white-space: nowrap; z-index: 15; border: 1px solid #333;
         }
 
         /* Modal */
         #modal-overlay {
-            display: none;
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 1000;
-            justify-content: center; align-items: center;
-            pointer-events: auto;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9); z-index: 1000;
+            justify-content: center; align-items: center; pointer-events: auto;
         }
         #modal-content {
-            background: #f5f5f5; color: #222;
-            width: 340px; max-height: 80vh; overflow-y: auto;
-            padding: 20px; border-radius: 10px;
-            box-shadow: 0 0 25px rgba(0,0,0,0.7);
+            background: #1a1a1a; color: #eee;
+            width: 380px; max-height: 85vh; overflow-y: auto;
+            padding: 25px; border-radius: 12px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8); border: 1px solid #444;
         }
-        #modal-content h2 { margin-top: 0; border-bottom: 2px solid #333; padding-bottom: 10px; font-size: 20px;}
-        
+        #modal-content h2 { margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 15px; font-size: 22px; color: #fff;}
         details.version-block {
-            margin-bottom: 8px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background: #fff;
-            overflow: hidden;
-            text-align: left;
+            margin-bottom: 10px; border: 1px solid #333;
+            border-radius: 6px; background: #222; overflow: hidden; text-align: left;
         }
-        details[open] { background: #e8f0fe; border-color: #4285f4; }
-        
+        details[open] { background: #2a2a2a; border-color: #555; }
         summary.version-title {
-            font-weight: bold;
-            cursor: pointer;
-            padding: 10px;
-            outline: none;
-            list-style: none;
-            background: #eee;
+            font-weight: bold; cursor: pointer; padding: 12px;
+            outline: none; list-style: none; background: #252525; color: #ddd;
         }
-        summary.version-title:hover { background: #e0e0e0; }
-        details[open] summary.version-title { background: #d2e3fc; color: #1967d2; }
+        summary.version-title:hover { background: #303030; }
+        details[open] summary.version-title { background: #333; color: #eebb00; }
         summary.version-title::-webkit-details-marker { display: none; }
-        summary.version-title::after { content: "+"; float: right; font-weight: normal; color: #666; }
+        summary.version-title::after { content: "+"; float: right; }
         details[open] summary.version-title::after { content: "-"; }
-        .version-list { margin: 10px 0 10px 20px; padding-right: 10px; font-size: 13px; line-height: 1.6; color: #333; }
+        .version-list { margin: 10px 0 10px 20px; padding-right: 15px; font-size: 13px; line-height: 1.6; color: #bbb; }
         #modal-close {
-            margin-top: 15px; padding: 10px; background: #333; color: white;
-            border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold;
+            margin-top: 20px; padding: 12px; background: #c0392b; color: white;
+            border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px;
         }
     </style>
 </head>
@@ -298,8 +207,6 @@
 
             <div id="info-btn">i</div>
             <div id="fire-btn">SHOOT</div>
-            
-            <!-- V1.0.5: 文字修改為重新擺球 -->
             <button id="reset-cue-btn">↩️ 重新擺球</button>
 
             <div id="power-bar-container">
@@ -307,7 +214,7 @@
             </div>
             <div id="power-label">POWER</div>
 
-            <div id="status-msg">Vibe Snooker V1.0.5</div>
+            <div id="status-msg">Vibe Snooker V1.0.10</div>
 
             <div id="controls-bottom">
                 <div class="adjust-btn" id="btn-left">&lt;</div>
@@ -316,28 +223,64 @@
         </div>
     </div>
 
-    <!-- Modal -->
     <div id="modal-overlay">
         <div id="modal-content">
             <h2>Snooker 版本資訊</h2>
             
-            <!-- V 1.0.5 -->
             <details class="version-block" open>
-                <summary class="version-title">Version 1.0.5 (最新)</summary>
+                <summary class="version-title">Version 1.0.10 (最新)</summary>
                 <ul class="version-list">
-                    <li><strong>進球判定重寫:</strong> 球在袋口附近時關閉庫邊碰撞，解決球被彈出問題。</li>
-                    <li><strong>庫邊調整:</strong> 厚度減薄至標準比例，提升視覺與可玩性。</li>
-                    <li><strong>球速與手感:</strong> 降低擊球速度(動畫變慢)，減少摩擦力(滾更遠)，模擬真實檯泥。</li>
-                    <li><strong>規則修正:</strong> 綠/黃球位置改為 D 區角落；移除紅球與粉球間隙。</li>
-                    <li><strong>擺球優化:</strong> 「重新擺球」按鈕改為擺球確認後出現，可隨時反悔重擺。</li>
+                    <li><strong>物理參數調校:</strong> 
+                        <br>- 摩擦係數 (Friction): 0.985
+                        <br>- 靜止判定 (Threshold): 0.01
+                        <br>- 擊球力道係數 (Force): 0.25
+                    </li>
+                    <li><strong>視覺修正:</strong> 移除了導致「庫邊蓋住袋口」的錯誤遮罩，現在袋口清晰可見，且保留了綠色圓弧袋角設計。</li>
                 </ul>
             </details>
 
             <details class="version-block">
+                <summary class="version-title">Version 1.0.9</summary>
+                <ul class="version-list">
+                    <li>視覺修正: 圓弧袋角 (Knuckles)。</li>
+                    <li>微調按鍵靈敏度 0.0001。</li>
+                </ul>
+            </details>
+
+            <details class="version-block">
+                <summary class="version-title">Version 1.0.8</summary>
+                <ul class="version-list">
+                    <li>慢動作重球感物理實驗。</li>
+                    <li>袋口與庫邊顏色調整。</li>
+                </ul>
+            </details>
+            <details class="version-block">
+                <summary class="version-title">Version 1.0.7</summary>
+                <ul class="version-list">
+                    <li>修正瞄準線消失問題。</li>
+                    <li>修正擺球按鍵邏輯。</li>
+                </ul>
+            </details>
+            <details class="version-block">
+                <summary class="version-title">Version 1.0.6</summary>
+                <ul class="version-list">
+                    <li>視覺擬真重製 (圓弧袋角)。</li>
+                    <li>物理引擎調校。</li>
+                    <li>操控優化 (瞄準鎖定)。</li>
+                </ul>
+            </details>
+            <details class="version-block">
+                <summary class="version-title">Version 1.0.5</summary>
+                <ul class="version-list">
+                    <li>袋口碰撞邏輯重寫。</li>
+                    <li>庫邊變薄。</li>
+                </ul>
+            </details>
+            <details class="version-block">
                 <summary class="version-title">Version 1.0.4</summary>
                 <ul class="version-list">
                     <li>預設力量 50%。</li>
-                    <li>碰撞邏輯初步優化。</li>
+                    <li>物理手感微調。</li>
                 </ul>
             </details>
             <details class="version-block">
@@ -361,48 +304,47 @@
                     <li>長條型記分板。</li>
                 </ul>
             </details>
+            <details class="version-block">
+                <summary class="version-title">Version 1.0.0</summary>
+                <ul class="version-list">
+                    <li>初始版本，實現基本物理模擬與雙人操控。</li>
+                </ul>
+            </details>
+
             <button id="modal-close">關閉</button>
         </div>
     </div>
 
     <script>
         /**
-         * Vibe Snooker V1.0.5
-         * 修正進球物理、庫邊厚度、動畫速度、擺球規則與重設邏輯
+         * Vibe Snooker V1.0.10
+         * 修正: 物理參數指定、袋口遮罩問題移除
          */
 
-        // --- 常數配置 ---
-        const TABLE_WIDTH_BASE = 800;
-        const TABLE_HEIGHT_BASE = 400;
+        const TABLE_WIDTH_BASE = 840;
+        const TABLE_HEIGHT_BASE = 420;
         
         const BALL_RADIUS = 7;
-        
-        // V1.0.5: 袋口半徑設為 22 (球直徑 14 的約 1.6 倍)
-        // 配合新的「忽略庫邊」邏輯，這大小很剛好
-        const POCKET_RADIUS = 22; 
-        
-        // V1.0.5: 庫邊改薄，視覺更像真實球桌 (原 25 -> 16)
-        const RAIL_SIZE = 16; 
-        
+        const POCKET_RADIUS = 18; 
+        const CUSHION_WIDTH = 20; 
         const D_LINE_X = TABLE_WIDTH_BASE * 0.2;
         const D_ARC_RADIUS = 60; 
 
-        // 物理參數
-        // V1.0.5: 摩擦力調高 (數值接近1)，讓球滾更久 (原 0.975 -> 0.988)
-        // 配合極低的速度係數，創造「慢速但長距離」的滾動感
-        const FRICTION = 0.988; 
-        const STOP_THRESHOLD = 0.03;
-        const CUSHION_RESTITUTION = 0.8; 
+        // V1.0.10 物理參數
+        const FRICTION = 0.985; 
+        const STOP_THRESHOLD = 0.01;
+        const CUSHION_RESTITUTION = 0.75; 
         
-        // V1.0.5: 大幅降低力道係數，解決「動畫太快」問題 (原 0.33 -> 0.18)
-        const FORCE_MULTIPLIER = 0.18;
+        // V1.0.10 擊球速度
+        const FORCE_MULTIPLIER = 0.25; 
 
         const COLORS = {
-            FELT: '#2a7c45',
-            RAIL: '#3e2211', // 稍微深一點的木頭色
-            POCKET: '#080808',
-            GUIDE_CUE: '#ffffff',
-            GUIDE_TARGET: '#ffff00', 
+            FELT: '#228b22', 
+            RAIL: '#3e2211', // 深咖啡 (外框)
+            CUSHION: '#228b22', // 庫邊 (綠色，用於修飾圓角)
+            POCKET: '#000000',
+            GUIDE_CUE: 'rgba(255, 255, 255, 0.8)',
+            GUIDE_TARGET: 'rgba(255, 255, 0, 0.8)', 
             CUE_STICK: '#d2b48c'
         };
 
@@ -417,7 +359,6 @@
             BLACK:  { color: '#000000', points: 7, type: 'color', value: 7 }
         };
 
-        // --- 全域變數 ---
         const canvas = document.getElementById('snookerCanvas');
         const ctx = canvas.getContext('2d');
         let scaleFactor = 1;
@@ -430,6 +371,8 @@
             isMoving: false,
             isAiming: true,
             isPlacingCue: true,
+            isBallInHand: true, 
+            aimLocked: false,
             currentPlayer: 1,
             scores: { 1: 0, 2: 0 },
             frames: { 1: 0, 2: 0 },
@@ -441,7 +384,6 @@
             minColorPoints: 2
         };
 
-        // --- 初始化 ---
         function init() {
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
@@ -455,10 +397,8 @@
             const container = document.getElementById('game-container');
             const targetRatio = TABLE_WIDTH_BASE / TABLE_HEIGHT_BASE;
             const containerRatio = container.clientWidth / container.clientHeight;
-
             let finalWidth, finalHeight;
-            const FILL_PERCENTAGE = 0.85; 
-
+            const FILL_PERCENTAGE = 0.9; 
             if (containerRatio > targetRatio) {
                 finalHeight = container.clientHeight * FILL_PERCENTAGE;
                 finalWidth = finalHeight * targetRatio;
@@ -466,7 +406,6 @@
                 finalWidth = container.clientWidth * FILL_PERCENTAGE;
                 finalHeight = finalWidth / targetRatio;
             }
-
             canvas.width = finalWidth;
             canvas.height = finalHeight;
             scaleFactor = finalWidth / TABLE_WIDTH_BASE;
@@ -474,14 +413,13 @@
 
         function resetGame(startNewMatch = false) {
             balls = [];
+            if (startNewMatch) gameState.frames = { 1: 0, 2: 0 };
             
-            if (startNewMatch) {
-                gameState.frames = { 1: 0, 2: 0 };
-            }
-
             gameState.isMoving = false;
             gameState.isAiming = true;
-            gameState.isPlacingCue = true; // 開局需要擺球
+            gameState.isPlacingCue = true;
+            gameState.isBallInHand = true; 
+            gameState.aimLocked = false;
             gameState.currentPlayer = 1;
             gameState.scores = { 1: 0, 2: 0 };
             gameState.aimAngle = 0;
@@ -494,43 +432,33 @@
             
             const w = TABLE_WIDTH_BASE;
             const h = TABLE_HEIGHT_BASE;
-            
-            // 定義袋口 (針對 RAIL_SIZE 微調)
-            // 讓袋口中心稍微深入邊框內，確保球掉進去
-            const offset = RAIL_SIZE / 2; 
+            const cornerOffset = CUSHION_WIDTH + 2; 
             pockets = [
-                { x: offset, y: offset },         
-                { x: w/2, y: -5 }, // 中袋稍微突出畫面外             
-                { x: w-offset, y: offset },       
-                { x: offset, y: h-offset },       
-                { x: w/2, y: h + 5 },             
-                { x: w-offset, y: h-offset }      
+                { x: cornerOffset, y: cornerOffset },         
+                { x: w/2, y: CUSHION_WIDTH - 5 },             
+                { x: w-cornerOffset, y: cornerOffset },       
+                { x: cornerOffset, y: h-cornerOffset },       
+                { x: w/2, y: h - CUSHION_WIDTH + 5 },             
+                { x: w-cornerOffset, y: h-cornerOffset }      
             ];
 
-            // 母球
             cueBall = createBall(-100, -100, BALL_TYPES.WHITE); 
             balls.push(cueBall);
 
-            // V1.0.5: 修正彩球位置
-            // Green: D線與半圓上方交點
             balls.push(createBall(D_LINE_X, h/2 - D_ARC_RADIUS, BALL_TYPES.GREEN)); 
-            // Yellow: D線與半圓下方交點
             balls.push(createBall(D_LINE_X, h/2 + D_ARC_RADIUS, BALL_TYPES.YELLOW)); 
-            // Brown: 中間
             balls.push(createBall(D_LINE_X, h/2, BALL_TYPES.BROWN));       
-            
             balls.push(createBall(w * 0.5, h/2, BALL_TYPES.BLUE));
             balls.push(createBall(w * 0.75, h/2, BALL_TYPES.PINK));
             balls.push(createBall(w * 0.91, h/2, BALL_TYPES.BLACK));
 
-            // V1.0.5: 紅球堆緊貼粉球 (間距改為 1px)
             let startX = w * 0.75 + BALL_RADIUS * 2 + 1;
             let startY = h / 2;
             for (let i = 0; i < 5; i++) {
                 for (let j = 0; j <= i; j++) {
-                    let x = startX + i * (BALL_RADIUS * 2 * 0.9); // 0.9 讓堆疊緊密
+                    let x = startX + i * (BALL_RADIUS * 2 * 0.88);
                     let y = startY - (i * BALL_RADIUS) + (j * BALL_RADIUS * 2);
-                    balls.push(createBall(x + Math.random()*0.1, y + Math.random()*0.1, BALL_TYPES.RED));
+                    balls.push(createBall(x, y, BALL_TYPES.RED));
                 }
             }
             updateUI();
@@ -550,7 +478,6 @@
             };
         }
 
-        // --- 物理引擎 (核心修正) ---
         function gameLoop() {
             updatePhysics();
             draw();
@@ -561,25 +488,20 @@
             if (!gameState.isMoving) return;
 
             let movingCount = 0;
-            const steps = 8; // 增加步數以保證慢速下的精確度
+            const steps = 8; 
 
             for (let s = 0; s < steps; s++) {
                 balls.forEach(ball => {
                     if (ball.inPocket) return;
-
                     ball.x += ball.vx / steps;
                     ball.y += ball.vy / steps;
 
-                    // 1. 袋口與進球判定 (V1.0.5 重寫)
                     let potted = false;
-                    let ignoreRail = false; // 是否忽略庫邊
-
+                    let ignoreRail = false;
                     for (let p of pockets) {
                         const dx = ball.x - p.x;
                         const dy = ball.y - p.y;
                         const dist = Math.sqrt(dx*dx + dy*dy);
-                        
-                        // 進球判定
                         if (dist < POCKET_RADIUS) {
                             ball.inPocket = true;
                             ball.vx = 0; ball.vy = 0;
@@ -588,23 +510,15 @@
                             potted = true;
                             break;
                         }
-                        
-                        // V1.0.5 關鍵邏輯: 
-                        // 如果球在袋口半徑的 1.5 倍範圍內，我們認為它正在進洞
-                        // 此時強制關閉庫邊碰撞，防止球被彈出
-                        if (dist < POCKET_RADIUS * 1.5) {
-                            ignoreRail = true;
-                        }
+                        if (dist < POCKET_RADIUS * 1.8) ignoreRail = true;
                     }
                     if (potted) return;
 
-                    // 2. 邊框檢測 (如果 nearPocket 則跳過)
                     if (!ignoreRail) {
-                        const minX = RAIL_SIZE + ball.radius;
-                        const maxX = TABLE_WIDTH_BASE - RAIL_SIZE - ball.radius;
-                        const minY = RAIL_SIZE + ball.radius;
-                        const maxY = TABLE_HEIGHT_BASE - RAIL_SIZE - ball.radius;
-
+                        const minX = CUSHION_WIDTH + ball.radius;
+                        const maxX = TABLE_WIDTH_BASE - CUSHION_WIDTH - ball.radius;
+                        const minY = CUSHION_WIDTH + ball.radius;
+                        const maxY = TABLE_HEIGHT_BASE - CUSHION_WIDTH - ball.radius;
                         if (ball.x < minX) { ball.x = minX; ball.vx *= -CUSHION_RESTITUTION; }
                         if (ball.x > maxX) { ball.x = maxX; ball.vx *= -CUSHION_RESTITUTION; }
                         if (ball.y < minY) { ball.y = minY; ball.vy *= -CUSHION_RESTITUTION; }
@@ -612,18 +526,15 @@
                     }
                 });
 
-                // 球間碰撞
                 for (let i = 0; i < balls.length; i++) {
                     for (let j = i + 1; j < balls.length; j++) {
-                        let b1 = balls[i];
-                        let b2 = balls[j];
+                        let b1 = balls[i]; let b2 = balls[j];
                         if (b1.inPocket || b2.inPocket) continue;
                         resolveCollision(b1, b2);
                     }
                 }
             }
 
-            // 摩擦力
             balls.forEach(ball => {
                 if (ball.inPocket) return;
                 ball.vx *= FRICTION;
@@ -640,39 +551,28 @@
         }
 
         function resolveCollision(b1, b2) {
-            const dx = b2.x - b1.x;
-            const dy = b2.y - b1.y;
+            const dx = b2.x - b1.x; const dy = b2.y - b1.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             const minDist = b1.radius + b2.radius;
-
             if (dist < minDist) {
                 const angle = Math.atan2(dy, dx);
-                const sin = Math.sin(angle);
-                const cos = Math.cos(angle);
-
+                const sin = Math.sin(angle); const cos = Math.cos(angle);
                 const vx1 = b1.vx * cos + b1.vy * sin;
                 const vy1 = b1.vy * cos - b1.vx * sin;
                 const vx2 = b2.vx * cos + b2.vy * sin;
                 const vy2 = b2.vy * cos - b2.vx * sin;
-
-                const vx1Final = vx2;
-                const vx2Final = vx1;
-
                 const overlap = minDist - dist;
-                b1.x -= (overlap/2) * cos;
-                b1.y -= (overlap/2) * sin;
-                b2.x += (overlap/2) * cos;
-                b2.y += (overlap/2) * sin;
-
-                b1.vx = vx1Final * cos - vy1 * sin;
-                b1.vy = vx1Final * sin + vy1 * cos;
-                b2.vx = vx2Final * cos - vy2 * sin;
-                b2.vy = vx2Final * sin + vy2 * cos;
+                b1.x -= (overlap/2) * cos; b1.y -= (overlap/2) * sin;
+                b2.x += (overlap/2) * cos; b2.y += (overlap/2) * sin;
+                b1.vx = vx2 * cos - vy1 * sin; b1.vy = vx2 * sin + vy1 * cos;
+                b2.vx = vx1 * cos - vy2 * sin; b2.vy = vx1 * sin + vy2 * cos;
             }
         }
 
-        // --- 規則邏輯 ---
         function handleTurnEnd() {
+            gameState.aimLocked = false;
+            gameState.isAiming = true;
+            
             const potted = gameState.pottedBalls;
             let switchTurn = true;
             let score = 0;
@@ -683,13 +583,12 @@
             const cuePotted = potted.find(b => b.type === 'cue');
             if (cuePotted) {
                 foul = true;
-                potted.forEach(b => {
-                   if (b.type === 'color' && b.points > foulPoints) foulPoints = b.points;
-                });
+                potted.forEach(b => { if (b.type === 'color' && b.points > foulPoints) foulPoints = b.points; });
                 cueBall.inPocket = false;
                 cueBall.vx = 0; cueBall.vy = 0;
                 cueBall.x = -100;
                 gameState.isPlacingCue = true;
+                gameState.isBallInHand = true; 
             }
 
             if (!foul) {
@@ -700,10 +599,8 @@
                     if (gameState.redsRemaining > 0) {
                         if (gameState.targetBall === 'red') {
                             const wrong = potted.find(b => b.type !== 'red');
-                            if (wrong) {
-                                foul = true; 
-                                foulPoints = Math.max(4, wrong.points);
-                            } else {
+                            if (wrong) { foul = true; foulPoints = Math.max(4, wrong.points); } 
+                            else {
                                 potted.forEach(b => score += b.points);
                                 gameState.redsRemaining -= potted.length;
                                 gameState.targetBall = 'color';
@@ -724,7 +621,6 @@
                             }
                         }
                     } else {
-                        // 清彩球
                         if (firstBall.points === gameState.minColorPoints) {
                             score += firstBall.points;
                             if (gameState.minColorPoints === 7) frameEnded = true;
@@ -770,8 +666,6 @@
             }
 
             gameState.pottedBalls = [];
-            gameState.isAiming = true;
-            
             resetPowerBarUI(50);
             updateUI();
         }
@@ -779,9 +673,7 @@
         function endFrame() {
             const p1 = gameState.scores[1];
             const p2 = gameState.scores[2];
-            if (p1 > p2) gameState.frames[1]++;
-            else gameState.frames[2]++;
-
+            if (p1 > p2) gameState.frames[1]++; else gameState.frames[2]++;
             if (gameState.frames[1] === 2 || gameState.frames[2] === 2) {
                 alert(`Game Over! Player ${gameState.frames[1] === 2 ? 1 : 2} Wins!`);
                 resetGame(true);
@@ -797,69 +689,112 @@
             return (idx >= 0 && idx < sequence.length - 1) ? sequence[idx + 1] : 999;
         }
 
-        // --- 繪圖邏輯 ---
+        // --- 繪圖邏輯 (V1.0.10: 移除袋口遮罩，還原黑洞) ---
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
             ctx.scale(scaleFactor, scaleFactor);
 
+            // 1. 邊框底色 (Rail - Wood)
             ctx.fillStyle = COLORS.RAIL;
             ctx.fillRect(0, 0, TABLE_WIDTH_BASE, TABLE_HEIGHT_BASE);
-            ctx.fillStyle = COLORS.FELT;
-            ctx.fillRect(RAIL_SIZE, RAIL_SIZE, TABLE_WIDTH_BASE - RAIL_SIZE*2, TABLE_HEIGHT_BASE - RAIL_SIZE*2);
 
+            // 2. 綠色檯面 (Felt) - 在木框之上
+            ctx.fillStyle = COLORS.FELT;
+            ctx.fillRect(CUSHION_WIDTH, CUSHION_WIDTH, TABLE_WIDTH_BASE - CUSHION_WIDTH*2, TABLE_HEIGHT_BASE - CUSHION_WIDTH*2);
+
+            // 3. 黑色袋口 (Pockets)
+            ctx.fillStyle = COLORS.POCKET;
+            pockets.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, POCKET_RADIUS, 0, Math.PI*2);
+                ctx.fill();
+            });
+
+            // 4. 綠色庫邊 (Fancy Cushions) - 修飾袋口
+            drawFancyCushions();
+
+            // V1.0.10: 移除了會蓋住袋口的邊框遮罩程式碼
+
+            // 5. D-Zone
             ctx.beginPath();
-            ctx.strokeStyle = "rgba(255,255,255,0.2)";
+            ctx.strokeStyle = "rgba(255,255,255,0.3)";
             ctx.lineWidth = 2;
-            ctx.moveTo(D_LINE_X, RAIL_SIZE);
-            ctx.lineTo(D_LINE_X, TABLE_HEIGHT_BASE - RAIL_SIZE);
+            ctx.moveTo(D_LINE_X, CUSHION_WIDTH);
+            ctx.lineTo(D_LINE_X, TABLE_HEIGHT_BASE - CUSHION_WIDTH);
             ctx.stroke();
             ctx.beginPath();
             ctx.arc(D_LINE_X, TABLE_HEIGHT_BASE/2, D_ARC_RADIUS, Math.PI/2, -Math.PI/2);
             ctx.stroke();
 
-            ctx.fillStyle = COLORS.POCKET;
-            pockets.forEach(p => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, POCKET_RADIUS, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
+            // 6. 球
             balls.forEach(ball => {
                 if (ball.inPocket) return;
+                ctx.beginPath();
+                ctx.arc(ball.x + 2, ball.y + 2, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(0,0,0,0.4)";
+                ctx.fill();
                 ctx.beginPath();
                 ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
                 ctx.fillStyle = ball.color;
                 ctx.fill();
                 ctx.beginPath();
                 ctx.arc(ball.x - 2, ball.y - 2, ball.radius/2, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+                ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
                 ctx.fill();
             });
 
+            // 7. 瞄準線
             if (gameState.isAiming && !gameState.isMoving && !gameState.isPlacingCue) {
                 drawAimingGuide();
                 drawCueStick();
             }
 
-            // 放置母球時的半透明預覽
             if (gameState.isPlacingCue) {
                 ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
                 ctx.beginPath();
                 ctx.arc(cueBall.x, cueBall.y, BALL_RADIUS, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.strokeStyle = "rgba(255, 255, 0, 0.5)";
+                ctx.beginPath();
+                ctx.arc(cueBall.x, cueBall.y, BALL_RADIUS + 2, 0, Math.PI * 2);
+                ctx.stroke();
             }
-
             ctx.restore();
         }
 
-        function drawAimingGuide() {
-            const alpha = 0.2 + (gameState.power / 100) * 0.6;
-            const guideLengthMult = 0.5 + (gameState.power / 100) * 1.5;
+        function drawFancyCushions() {
+            ctx.fillStyle = COLORS.CUSHION; 
+            const w = TABLE_WIDTH_BASE;
+            const h = TABLE_HEIGHT_BASE;
+            const cw = CUSHION_WIDTH;
+            const pocketGap = POCKET_RADIUS * 1.6; 
 
+            function drawPoly(pts) {
+                ctx.beginPath();
+                ctx.moveTo(pts[0], pts[1]);
+                for(let i=2; i<pts.length; i+=2) ctx.lineTo(pts[i], pts[i+1]);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = "rgba(0,0,0,0.1)"; 
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            drawPoly([cw + pocketGap, 0, w/2 - pocketGap/2, 0, w/2 - pocketGap/2 - 5, cw, cw + pocketGap + 5, cw]);
+            drawPoly([w/2 + pocketGap/2, 0, w - cw - pocketGap, 0, w - cw - pocketGap - 5, cw, w/2 + pocketGap/2 + 5, cw]);
+            drawPoly([cw + pocketGap, h, w/2 - pocketGap/2, h, w/2 - pocketGap/2 - 5, h - cw, cw + pocketGap + 5, h - cw]);
+            drawPoly([w/2 + pocketGap/2, h, w - cw - pocketGap, h, w - cw - pocketGap - 5, h - cw, w/2 + pocketGap/2 + 5, h - cw]);
+            drawPoly([0, cw + pocketGap, 0, h - cw - pocketGap, cw, h - cw - pocketGap - 5, cw, cw + pocketGap + 5]);
+            drawPoly([w, cw + pocketGap, w, h - cw - pocketGap, w - cw, h - cw - pocketGap - 5, w - cw, cw + pocketGap + 5]);
+        }
+
+        function drawAimingGuide() {
+            const alpha = 0.3 + (gameState.power / 100) * 0.7;
+            const guideLengthMult = 0.8 + (gameState.power / 100) * 2.0;
             const dx = Math.cos(gameState.aimAngle);
             const dy = Math.sin(gameState.aimAngle);
-            let hitDist = 1000;
+            let hitDist = 2000;
             let hitBall = null;
 
             for (let b of balls) {
@@ -873,42 +808,33 @@
                     if (distSq < minDist * minDist) {
                         const backDist = Math.sqrt(minDist*minDist - distSq);
                         const impactDist = proj - backDist;
-                        if (impactDist < hitDist) {
-                            hitDist = impactDist;
-                            hitBall = b;
-                        }
+                        if (impactDist < hitDist) { hitDist = impactDist; hitBall = b; }
                     }
                 }
             }
             
             const endX = cueBall.x + dx * hitDist;
             const endY = cueBall.y + dy * hitDist;
-
             ctx.save();
             ctx.globalAlpha = alpha;
-
             ctx.beginPath();
             ctx.strokeStyle = COLORS.GUIDE_CUE;
-            ctx.setLineDash([4, 4]);
+            ctx.setLineDash([4, 4]); 
             ctx.moveTo(cueBall.x, cueBall.y);
             ctx.lineTo(endX, endY);
             ctx.stroke();
             ctx.setLineDash([]);
-
             if (hitBall) {
                 ctx.beginPath();
                 ctx.arc(endX, endY, BALL_RADIUS, 0, Math.PI*2);
-                ctx.strokeStyle = "rgba(255,255,255,0.6)";
+                ctx.strokeStyle = "rgba(255,255,255,0.7)";
                 ctx.stroke();
-
                 const collisionDx = hitBall.x - endX;
                 const collisionDy = hitBall.y - endY;
                 const len = Math.sqrt(collisionDx*collisionDx + collisionDy*collisionDy);
                 const normX = collisionDx / len;
                 const normY = collisionDy / len;
-
-                const targetLineLen = 50 * guideLengthMult;
-
+                const targetLineLen = 80 * guideLengthMult;
                 ctx.beginPath();
                 ctx.strokeStyle = COLORS.GUIDE_TARGET;
                 ctx.lineWidth = 2;
@@ -920,17 +846,16 @@
         }
 
         function drawCueStick() {
-            const stickLen = 180;
-            const offset = 20 + gameState.power * 0.6;
+            const stickLen = 220;
+            const offset = 25 + gameState.power * 0.8;
             const dx = Math.cos(gameState.aimAngle);
             const dy = Math.sin(gameState.aimAngle);
             const startX = cueBall.x - dx * offset;
             const startY = cueBall.y - dy * offset;
             const endX = startX - dx * stickLen;
             const endY = startY - dy * stickLen;
-
             ctx.beginPath();
-            ctx.lineWidth = 5;
+            ctx.lineWidth = 6;
             ctx.strokeStyle = COLORS.CUE_STICK;
             ctx.lineCap = 'round';
             ctx.moveTo(startX, startY);
@@ -938,18 +863,17 @@
             ctx.stroke();
         }
 
-        // --- 輸入控制 ---
         let isDraggingPower = false;
+        let adjustInterval = null;
+        let adjustTimeout = null;
 
         function setupInput() {
             const touchHandler = (handler) => (e) => {
                 if (e.target.tagName === 'CANVAS') e.preventDefault();
                 handler(e.touches ? e.touches[0] : e);
             };
-
-            canvas.addEventListener('mousedown', handleAimStart);
-            canvas.addEventListener('touchstart', touchHandler(handleAimStart), {passive: false});
-
+            canvas.addEventListener('mousedown', handleCanvasInput);
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleCanvasInput(e.touches[0]); });
             canvas.addEventListener('mousemove', handleAimMove);
             canvas.addEventListener('touchmove', touchHandler(handleAimMove), {passive: false});
 
@@ -961,18 +885,14 @@
                 let val = rect.bottom - clientY;
                 let percent = (val / rect.height) * 100;
                 percent = Math.max(0, Math.min(100, percent));
-                
                 gameState.power = percent;
                 document.getElementById('power-fill').style.height = percent + '%';
                 updateFireButtonState();
             };
-
             const startDrag = (e) => { isDraggingPower = true; updatePower(e); };
             const endDrag = () => { isDraggingPower = false; };
-
             pBar.addEventListener('mousedown', startDrag);
             pBar.addEventListener('touchstart', (e) => { e.preventDefault(); startDrag(e.touches[0]); });
-
             window.addEventListener('mousemove', (e) => { if(isDraggingPower) updatePower(e); });
             window.addEventListener('touchmove', (e) => { if(isDraggingPower) updatePower(e); });
             window.addEventListener('mouseup', endDrag);
@@ -980,20 +900,19 @@
 
             document.getElementById('fire-btn').addEventListener('click', shoot);
 
-            // V1.0.5: 重設按鈕 -> 回到「擺球」狀態
             document.getElementById('reset-cue-btn').addEventListener('click', () => {
-                if (!gameState.isMoving && !gameState.isPlacingCue) {
+                if (!gameState.isMoving && gameState.isBallInHand) {
                     gameState.isPlacingCue = true;
-                    // 先把球移回棕球點當作預設
+                    gameState.aimLocked = false; 
                     cueBall.x = D_LINE_X;
                     cueBall.y = TABLE_HEIGHT_BASE / 2;
                     showTempMsg("請點擊 D 區放置母球");
-                    updateUI(); // 更新介面以隱藏重設按鈕
+                    updateUI();
                 }
             });
 
-            document.getElementById('btn-left').addEventListener('click', () => adjustAngle(-0.005));
-            document.getElementById('btn-right').addEventListener('click', () => adjustAngle(0.005));
+            setupAdjustButton('btn-left', -0.0001);
+            setupAdjustButton('btn-right', 0.0001);
 
             document.getElementById('info-btn').addEventListener('click', () => {
                 document.getElementById('modal-overlay').style.display = 'flex';
@@ -1003,15 +922,34 @@
             });
         }
 
+        function setupAdjustButton(id, delta) {
+            const btn = document.getElementById(id);
+            const startAdjust = (e) => {
+                e.preventDefault();
+                if (gameState.isMoving || gameState.isPlacingCue) return;
+                adjustAngle(delta);
+                adjustTimeout = setTimeout(() => {
+                    adjustInterval = setInterval(() => adjustAngle(delta), 30);
+                }, 400);
+            };
+            
+            const stopAdjust = () => { 
+                clearTimeout(adjustTimeout); 
+                clearInterval(adjustInterval); 
+            };
+
+            btn.addEventListener('mousedown', startAdjust);
+            btn.addEventListener('mouseup', stopAdjust);
+            btn.addEventListener('mouseleave', stopAdjust);
+            btn.addEventListener('touchstart', startAdjust);
+            btn.addEventListener('touchend', stopAdjust);
+        }
+
         function setupAccordion() {
             const details = document.querySelectorAll('details.version-block');
             details.forEach((targetDetail) => {
                 targetDetail.addEventListener('click', () => {
-                    details.forEach((d) => {
-                        if (d !== targetDetail) {
-                            d.removeAttribute('open');
-                        }
-                    });
+                    details.forEach((d) => { if (d !== targetDetail) d.removeAttribute('open'); });
                 });
             });
         }
@@ -1024,31 +962,24 @@
             };
         }
 
-        function handleAimStart(e) {
+        function handleCanvasInput(e) {
             if (gameState.isMoving) return;
             const pos = getLogicPos(e.clientX, e.clientY);
 
             if (gameState.isPlacingCue) {
-                // D區判定
                 const dCenterY = TABLE_HEIGHT_BASE / 2;
                 const dist = Math.sqrt(Math.pow(pos.x - D_LINE_X, 2) + Math.pow(pos.y - dCenterY, 2));
-                
                 if (pos.x <= D_LINE_X && dist <= D_ARC_RADIUS) {
                     let collision = false;
                     for (let b of balls) {
                         if (b === cueBall || b.inPocket) continue;
                         const distSq = Math.pow(pos.x - b.x, 2) + Math.pow(pos.y - b.y, 2);
-                        if (distSq < Math.pow(BALL_RADIUS * 2 + 1, 2)) {
-                            collision = true;
-                            break;
-                        }
+                        if (distSq < Math.pow(BALL_RADIUS * 2 + 1, 2)) { collision = true; break; }
                     }
-
                     if (collision) {
                         showTempMsg("位置重疊！", true);
                     } else {
-                        cueBall.x = pos.x;
-                        cueBall.y = pos.y;
+                        cueBall.x = pos.x; cueBall.y = pos.y;
                         gameState.isPlacingCue = false; 
                         updateUI();
                     }
@@ -1056,16 +987,16 @@
                     showTempMsg("請放置在 D 區半圓內", true);
                 }
             } else {
+                if (gameState.aimLocked) { } else { gameState.aimLocked = true; }
                 updateAimAngle(pos.x, pos.y);
             }
         }
 
         function handleAimMove(e) {
             if (gameState.isMoving || gameState.isPlacingCue) return;
-            if (e.buttons === 1 || e.type === 'touchmove') {
-                const pos = getLogicPos(e.clientX, e.clientY);
-                updateAimAngle(pos.x, pos.y);
-            }
+            if (gameState.aimLocked) return; 
+            const pos = getLogicPos(e.clientX || (e.touches ? e.touches[0].clientX : 0), e.clientY || (e.touches ? e.touches[0].clientY : 0));
+            updateAimAngle(pos.x, pos.y);
         }
 
         function updateAimAngle(tx, ty) {
@@ -1092,7 +1023,6 @@
             if (gameState.isMoving || gameState.isPlacingCue || gameState.power <= 0) return;
             
             const force = gameState.power * FORCE_MULTIPLIER; 
-            
             const dx = Math.cos(gameState.aimAngle);
             const dy = Math.sin(gameState.aimAngle);
 
@@ -1100,7 +1030,10 @@
             cueBall.vy = dy * force;
             gameState.isMoving = true;
             gameState.isAiming = false;
+            // V1.0.8: 擊球瞬間，手中球狀態結束
+            gameState.isBallInHand = false; 
             
+            updateUI();
             updateFireButtonState(); 
         }
 
@@ -1114,10 +1047,7 @@
             const el = document.getElementById('status-msg');
             el.innerText = text;
             el.style.color = isError ? '#ff6666' : '#66ff66';
-            setTimeout(() => {
-                updateUI(); 
-                el.style.color = '#eee';
-            }, 2000);
+            setTimeout(() => { updateUI(); el.style.color = '#ccc'; }, 2000);
         }
 
         function updateUI() {
@@ -1126,11 +1056,8 @@
             document.getElementById('frame-score').innerText = `${gameState.frames[1]} - ${gameState.frames[2]}`;
 
             const sb = document.getElementById('scoreboard');
-            if (gameState.currentPlayer === 1) {
-                sb.classList.add('active-p1'); sb.classList.remove('active-p2');
-            } else {
-                sb.classList.add('active-p2'); sb.classList.remove('active-p1');
-            }
+            if (gameState.currentPlayer === 1) { sb.classList.add('active-p1'); sb.classList.remove('active-p2'); } 
+            else { sb.classList.add('active-p2'); sb.classList.remove('active-p1'); }
 
             const resetBtn = document.getElementById('reset-cue-btn');
             const fireBtn = document.getElementById('fire-btn');
@@ -1138,11 +1065,11 @@
             let msg = "";
             if (gameState.isPlacingCue) {
                 msg = `玩家 ${gameState.currentPlayer} (手中球): 請點擊 D 區放置母球`;
-                resetBtn.style.display = 'none'; // 正在放置時不顯示重設按鈕(因為就在放置中)
+                resetBtn.style.display = 'none'; 
                 fireBtn.style.opacity = 0; 
             } else {
-                // V1.0.5: 只有在瞄準狀態且非移動中才顯示「重新擺球」
-                if (!gameState.isMoving) {
+                // V1.0.8: 嚴格判斷 - 只有手中球且未移動時顯示
+                if (gameState.isBallInHand && !gameState.isMoving) {
                     resetBtn.style.display = 'block';
                 } else {
                     resetBtn.style.display = 'none';
@@ -1163,7 +1090,6 @@
         }
 
         init();
-
     </script>
 </body>
 </html>
